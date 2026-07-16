@@ -15,6 +15,7 @@ These widgets run in the browser on your Brightspace homepage. They use built-in
 | **Tech Tips** | [`Tech Tips/`](./Tech%20Tips/) | Faculty-only random D2L tech tips loaded from a Content topic in your organization |
 | **Browser Specific Notification** | [`Browser Specific Notification/`](./Browser%20Specific%20Notification/) | Device-specific notices for Mac/Safari, Chromebook/Respondus, and Windows S Mode |
 | **Faculty Navigation Menu** | [`Faculty Navigation Menu/`](./Faculty%20Navigation%20Menu/) | Faculty accordion with training links, grade due dates, and sandbox course creation |
+| **Faculty Incomplete Students** | [`Faculty Incomplete Students/`](./Faculty%20Incomplete%20Students/) | Count and list of students with Incomplete role across instructor courses |
 
 Each folder contains the widget HTML and, where available, a README with setup and adaptation instructions.
 
@@ -44,7 +45,7 @@ To add a widget:
 
 ## Credits
 
-Widgets in this repository are maintained by Brightspace administrators in the community. Several widgets were developed by **Delta College** eLearning, including D2L Welcome Message, Upcoming Courses, Tech Tips, Browser Specific Notification, and Faculty Navigation Menu.
+Widgets in this repository are maintained by Brightspace administrators in the community. Several widgets were developed by **Delta College** eLearning, including D2L Welcome Message, Upcoming Courses, Tech Tips, Browser Specific Notification, Faculty Navigation Menu, and Faculty Incomplete Students.
 
 ---
 
