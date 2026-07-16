@@ -13,6 +13,7 @@ These widgets run in the browser on your Brightspace homepage. They use built-in
 | **D2L Welcome Message** | [`D2L Welcome Message/`](./D2L%20Welcome%20Message/) | Personalized welcome by role; nudges students who have not accessed an active course in 4+ days |
 | **Upcoming Courses** | [`Upcoming Courses/`](./Upcoming%20Courses/) | Shows a student's or instructor's enrolled courses for the upcoming term from an SIS enrollment CSV |
 | **Tech Tips** | [`Tech Tips/`](./Tech%20Tips/) | Faculty-only random D2L tech tips loaded from a Content topic in your organization |
+| **Browser Specific Notification** | [`Browser Specific Notification/`](./Browser%20Specific%20Notification/) | Device-specific notices for Mac/Safari, Chromebook/Respondus, and Windows S Mode |
 
 Each folder contains the widget HTML and, where available, a README with setup and adaptation instructions.
 
@@ -40,7 +41,7 @@ To add a widget:
 
 ## Credits
 
-Widgets in this repository are maintained by Brightspace administrators in the community. Several widgets were developed by **Delta College** eLearning, including D2L Welcome Message, Upcoming Courses, and Tech Tips.
+Widgets in this repository are maintained by Brightspace administrators in the community. Several widgets were developed by **Delta College** eLearning, including D2L Welcome Message, Upcoming Courses, Tech Tips, and Browser Specific Notification.
 
 ---
 
