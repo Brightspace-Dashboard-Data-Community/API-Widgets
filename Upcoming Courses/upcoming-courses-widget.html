@@ -1,7 +1,7 @@
 <!--
   Brightspace Upcoming Courses Widget — FALL 26 (26/FA)
   Paste into a D2L HTML widget. Requires Manage Files CSV:
-  https://elearning.delta.edu/content/future-courses/26FA-Enrollments-Students.csv
+  https://YOUR-BRIGHTSPACE-DOMAIN/content/future-courses/26FA-Enrollments-Students.csv
 -->
 <p></p>
 <div id="enrollment-widget-container"></div>
@@ -142,7 +142,7 @@ function renderCourseList(rows, showInstructor) {
   (async () => {
     try {
       const whoami = await BrightspaceFetch('/d2l/api/lp/1.51/users/whoami');
-      const blockedUsers = ['justinbamberg', 'sheryljensen', 'errinmilkowski.d2l', 'kayleighnelson.d2l'];
+      const blockedUsers = ['admin.username', 'another.user']; // Optional: hide widget for test accounts
       if (blockedUsers.includes(whoami.UniqueName)) return;
 
       let orgDefinedId = null;
@@ -156,7 +156,7 @@ function renderCourseList(rows, showInstructor) {
         return;
       }
 
-      const csvUrl = 'https://elearning.delta.edu/content/future-courses/26FA-Enrollments-Students.csv';
+      const csvUrl = 'https://YOUR-BRIGHTSPACE-DOMAIN/content/future-courses/26FA-Enrollments-Students.csv';
       const res = await fetch(csvUrl);
       if (!res.ok) throw new Error('CSV fetch failed: ' + res.status);
 
@@ -178,7 +178,7 @@ function renderCourseList(rows, showInstructor) {
       container.innerHTML = '<div style="font-family:Arial,sans-serif;padding:1em;border:1px solid #ccc;border-radius:8px;">' +
         '<h2 style="font-size:1em;margin-bottom:0.5em;">Fall 26 Enrollments</h2>' +
         '<div id="course-results" style="font-size:0.95em;color:#333;"></div>' +
-        '<p style="margin-top:1.5em;">📚 <a href="https://www.bookstore.delta.edu/buy_textbooks.asp" target="_blank" style="color:#0077cc;text-decoration:none;">Buy Books</a><br>Starting August 2026</p></div>';
+        '<p style="margin-top:1.5em;">📚 <a href="https://bookstore.yourcollege.edu/buy_textbooks.asp" target="_blank" style="color:#0077cc;text-decoration:none;">Buy Books</a><br>Starting August 2026</p></div>';
 
       const output = document.getElementById('course-results');
       output.innerHTML = studentRows.length === 0

@@ -1,13 +1,13 @@
 <!--
   Brightspace Welcome Message Widget — Spring/Summer 26 (26/SP)
   Paste into a D2L HTML widget. Requires Manage Files CSV:
-  https://elearning.delta.edu/content/api-apps/last-loggedin/course-sec-dates-26SP.csv
+  https://YOUR-BRIGHTSPACE-DOMAIN/content/api-apps/last-loggedin/course-sec-dates-26SP.csv
 
   Supports legacy columns (SEC_NAME, SEC_START_DATE, SEC_END_DATE) and the
   new course_sec_meetings export (Depts, Course Number, Section, Start Date, End Date, Term).
 -->
 <div id="delta-welcome-widget" style="font-family: Arial, Helvetica, sans-serif; padding: 1em 1.15em; margin: 0; border: 1px solid #d8e8dc; border-radius: 8px; background: linear-gradient(135deg, #f7fbf8 0%, #ffffff 100%); border-left: 4px solid #005614; box-sizing: border-box;">
-  <h2 id="welcome-msg-delta" style="margin: 0; font-size: 1.15em; font-weight: 600; color: #005614; line-height: 1.4;">Welcome to D2L Brightspace at Delta College!</h2>
+  <h2 id="welcome-msg-delta" style="margin: 0; font-size: 1.15em; font-weight: 600; color: #005614; line-height: 1.4;">Welcome to D2L Brightspace at Your College!</h2>
   <div id="inactive-course-msg-delta" style="margin: 0;"></div>
 </div>
 <p><script>
@@ -285,7 +285,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         if (!isStudent) {
-            welcomeEl.textContent = cleanFirstName + ", welcome to D2L Brightspace at Delta College!";
+            welcomeEl.textContent = cleanFirstName + ", welcome to D2L Brightspace at Your College!";
             welcomeEl.style.fontSize = "1.15em";
             return;
         }
@@ -294,7 +294,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             '<span style="font-size:0.88em;font-weight:500;color:#3d6b47;">Student ID # ' + studentId + '</span>';
 
         try {
-            const csvUrl = "https://elearning.delta.edu/content/api-apps/last-loggedin/course-sec-dates-26SP.csv";
+            const csvUrl = "https://YOUR-BRIGHTSPACE-DOMAIN/content/api-apps/last-loggedin/course-sec-dates-26SP.csv";
             const csvRes = await fetch(csvUrl, { credentials: "include" });
             if (!csvRes.ok) throw new Error("CSV fetch failed: " + csvRes.status);
 

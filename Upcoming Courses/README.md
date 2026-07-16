@@ -161,7 +161,7 @@ Update faculty and student footer links:
 | Setting | Delta College example |
 |---------|----------------------|
 | Faculty book orders | `Textbook requisition` (internal D2L link) |
-| Student bookstore | `https://www.bookstore.delta.edu/buy_textbooks.asp` |
+| Student bookstore | `https://bookstore.yourcollege.edu/buy_textbooks.asp` |
 | Book order deadline | April 10, 2026 |
 | Bookstore availability | Starting August 2026 |
 

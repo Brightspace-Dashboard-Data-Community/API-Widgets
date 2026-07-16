@@ -125,7 +125,7 @@ Accordion headers use Delta green `#005b4d`. Search and replace across the file 
 const csvResponse = await fetch('https://YOUR-DOMAIN/content/YOUR-FOLDER/semester_dates.csv');
 ```
 
-Update course link base URL if not using `elearning.delta.edu`:
+Update course link base URL — the widget uses a relative path `/d2l/home/{id}` by default.
 
 ```javascript
 <a href="https://YOUR-DOMAIN/d2l/home/${course.id}" ...
@@ -149,7 +149,7 @@ Update these institution-specific values in `createSandboxCourse()`:
 | `SemesterId` | `2993337` | Sandbox semester org unit ID |
 | Instructor `RoleId` | `102` | Role enrolled on new course |
 | Student `RoleId` | `112` | ZZDemo student role |
-| `ExternalEmail` | `sandbox@delta.edu` | Demo student email domain |
+| `ExternalEmail` | `sandbox@yourcollege.edu` | Demo student email domain |
 
 **Find IDs:** Admin Tools → Org Unit Editor, or API exploration in your sandbox.
 
