@@ -1,0 +1,375 @@
+<!--
+  Brightspace Welcome Message Widget — Spring/Summer 26 (26/SP)
+  Paste into a D2L HTML widget. Requires Manage Files CSV:
+  https://elearning.delta.edu/content/api-apps/last-loggedin/course-sec-dates-26SP.csv
+
+  Supports legacy columns (SEC_NAME, SEC_START_DATE, SEC_END_DATE) and the
+  new course_sec_meetings export (Depts, Course Number, Section, Start Date, End Date, Term).
+-->
+<div id="delta-welcome-widget" style="font-family: Arial, Helvetica, sans-serif; padding: 1em 1.15em; margin: 0; border: 1px solid #d8e8dc; border-radius: 8px; background: linear-gradient(135deg, #f7fbf8 0%, #ffffff 100%); border-left: 4px solid #005614; box-sizing: border-box;">
+  <h2 id="welcome-msg-delta" style="margin: 0; font-size: 1.15em; font-weight: 600; color: #005614; line-height: 1.4;">Welcome to D2L Brightspace at Delta College!</h2>
+  <div id="inactive-course-msg-delta" style="margin: 0;"></div>
+</div>
+<p><script>
+document.addEventListener("DOMContentLoaded", async function () {
+    if (window.deltaWelcomeWidgetLoaded) {
+        console.log("Welcome widget already ran. Skipping duplicate run.");
+        return;
+    }
+    window.deltaWelcomeWidgetLoaded = true;
+
+    const inactivityMinutes = 5760; // 4 days
+    const SPRING_SUMMER_26_TERMS = /^26\/(SP|SU|SM|SS)$/i;
+
+    function getCell(row, candidates) {
+        if (!row || typeof row !== "object") return "";
+        const keys = Object.keys(row);
+        const normMap = new Map();
+        keys.forEach(function (k) {
+            const nk = k.replace(/\s+/g, "").toLowerCase();
+            if (!normMap.has(nk)) normMap.set(nk, k);
+        });
+        for (let i = 0; i < candidates.length; i++) {
+            const c = candidates[i];
+            const raw = row[c];
+            if (raw !== undefined && raw !== null && String(raw).trim() !== "") {
+                return String(raw).trim();
+            }
+            const nk = c.replace(/\s+/g, "").toLowerCase();
+            const orig = normMap.get(nk);
+            if (orig !== undefined) {
+                const v = row[orig];
+                if (v !== undefined && v !== null && String(v).trim() !== "") return String(v).trim();
+            }
+        }
+        return "";
+    }
+
+    function isCancelledStatus(status) {
+        const s = String(status || "").trim().toUpperCase();
+        return s === "C" || s === "CANCELLED" || s === "CANCELED";
+    }
+
+    function buildSectionKeyFromRow(row) {
+        const secName = getCell(row, ["SEC_NAME", "Sec_Name", "Section Name"]);
+        if (secName) return normalizeSectionName(secName);
+
+        const dept = getCell(row, ["SEC_DEPTS", "Sec_Depts", "DEPT", "Department", "Depts"]);
+        const num = getCell(row, ["SEC_COURSE_NO", "Sec_Course_No", "COURSE_NO", "CourseNo", "Course Number"]);
+        const sec = getCell(row, ["SEC_NO", "Sec_No", "SECTION", "Section"]);
+        if (!dept || !num || !sec) return "";
+
+        return normalizeSectionName(dept + "-" + num + "-" + sec);
+    }
+
+    function buildSectionDateMap(csvRows) {
+        const sectionDateMap = {};
+
+        csvRows.forEach(function (row) {
+            const term = getCell(row, ["SEC_TERM", "Sec_Term", "TERM", "Term"]);
+            if (term && !SPRING_SUMMER_26_TERMS.test(term)) return;
+
+            const status = getCell(row, ["SEC_STATUS", "Sec_Status", "Status"]);
+            if (status && isCancelledStatus(status)) return;
+
+            const secName = buildSectionKeyFromRow(row);
+            const startDate = parseSISDate(getCell(row, [
+                "SEC_START_DATE", "Sec_Start_Date", "Start Date", "Start", "StartDate"
+            ]));
+            const endDate = parseSISDate(getCell(row, [
+                "SEC_END_DATE", "Sec_End_Date", "End Date", "End", "EndDate"
+            ]));
+
+            if (!secName || !startDate || !endDate) return;
+
+            sectionDateMap[secName] = {
+                startDate: startDate,
+                endDate: endDate
+            };
+        });
+
+        return sectionDateMap;
+    }
+
+    async function BrightspaceFetch(method, url) {
+        try {
+            const token = localStorage.getItem("XSRF.Token");
+            const res = await fetch(url, {
+                method: method,
+                credentials: "include",
+                headers: {
+                    "X-CSRF-Token": token
+                }
+            });
+            if (!res.ok) throw new Error("HTTP error! Status: " + res.status + " - " + url);
+            return await res.json();
+        } catch (error) {
+            console.error("Fetch error: " + url, error);
+            return null;
+        }
+    }
+
+    async function getAllEnrollments() {
+        let allItems = [];
+        let bookmark = null;
+        let hasMore = true;
+
+        while (hasMore) {
+            const endpoint = bookmark
+                ? "/d2l/api/lp/1.49/enrollments/myenrollments/?bookmark=" + bookmark
+                : "/d2l/api/lp/1.49/enrollments/myenrollments/";
+
+            const response = await BrightspaceFetch("GET", endpoint);
+            if (!response) break;
+
+            allItems = allItems.concat(response.Items || []);
+            hasMore = response.PagingInfo && response.PagingInfo.HasMoreItems;
+            bookmark = response.PagingInfo && response.PagingInfo.Bookmark;
+        }
+
+        return allItems;
+    }
+
+    function parseCSV(text) {
+        const cleanedText = String(text || "")
+            .replace(/^\uFEFF/, "")
+            .replace(/\r/g, "")
+            .trim();
+
+        if (!cleanedText) return [];
+
+        const lines = cleanedText.split("\n");
+        const headers = lines[0].split(",").map(function (h) {
+            return h.replace(/^\uFEFF/, "").trim().replace(/^"|"$/g, "");
+        });
+
+        return lines.slice(1).filter(function (line) {
+            return line.trim() !== "";
+        }).map(function (line) {
+            const values = line.split(",").map(function (v) {
+                return v.trim().replace(/^"|"$/g, "");
+            });
+
+            const row = {};
+            headers.forEach(function (header, i) {
+                row[header] = values[i] || "";
+            });
+            return row;
+        });
+    }
+
+    function parseSISDate(dateStr) {
+        if (!dateStr) return null;
+
+        const firstPart = String(dateStr).trim().split(" ")[0];
+        const parts = firstPart.split("/");
+        if (parts.length !== 3) return null;
+
+        const mm = parseInt(parts[0], 10);
+        const dd = parseInt(parts[1], 10);
+        let yy = parseInt(parts[2], 10);
+
+        if (isNaN(mm) || isNaN(dd) || isNaN(yy)) return null;
+
+        yy = yy < 100 ? 2000 + yy : yy;
+
+        const d = new Date(yy, mm - 1, dd);
+        if (isNaN(d.getTime())) return null;
+
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }
+
+    function normalizeSectionName(value) {
+        if (!value) return "";
+        return String(value)
+            .trim()
+            .replace(/\s+/g, " ")
+            .replace(/\s*\(.*?\)\s*$/g, "")
+            .trim()
+            .toUpperCase();
+    }
+
+    function normalizeCourseCode(value) {
+        if (!value) return "";
+        return String(value)
+            .replace(/-COURSE$/i, "")
+            .trim()
+            .toUpperCase();
+    }
+
+    function extractSectionKeyFromCourseCode(value) {
+        if (!value) return "";
+
+        return String(value)
+            .replace(/-COURSE$/i, "")
+            .replace(/-\d{2}\/[A-Z]{2}$/i, "")
+            .trim()
+            .toUpperCase();
+    }
+
+    function minutesSince(dateValue) {
+        if (!dateValue) return null;
+
+        const last = new Date(dateValue);
+        if (isNaN(last.getTime())) return null;
+
+        const now = new Date();
+        const diffMs = now.getTime() - last.getTime();
+        return Math.floor(diffMs / (1000 * 60));
+    }
+
+    function formatElapsedTime(totalMinutes) {
+        if (totalMinutes === null) return "";
+
+        if (totalMinutes < 60) {
+            return totalMinutes + " minute" + (totalMinutes === 1 ? "" : "s");
+        }
+
+        if (totalMinutes < 1440) {
+            const hours = Math.floor(totalMinutes / 60);
+            return hours + " hour" + (hours === 1 ? "" : "s");
+        }
+
+        const days = Math.floor(totalMinutes / 1440);
+        return days + " day" + (days === 1 ? "" : "s");
+    }
+
+    function courseLinkHtml(label, orgUnitId) {
+        return '<a href="/d2l/home/' + orgUnitId + '" style="color:#005614;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(0,86,20,0.35);">' +
+            label + '</a>';
+    }
+
+    function renderInactiveAlert(messageHtml) {
+        return '<div style="display:flex;align-items:flex-start;gap:0.55em;margin-top:0.75em;padding:0.65em 0.8em;background:#fff8e6;border:1px solid #f0d98c;border-radius:6px;font-size:0.92em;color:#4a4a4a;line-height:1.5;">' +
+            '<span style="flex-shrink:0;font-size:1.05em;line-height:1.35;" aria-hidden="true">&#128221;</span>' +
+            '<span>' + messageHtml + '</span>' +
+            '</div>';
+    }
+
+    async function displayRoleBasedMessage() {
+        console.log("Welcome widget starting...");
+
+        const user = await BrightspaceFetch("GET", "/d2l/api/lp/1.43/users/whoami");
+        if (!user) return;
+
+        const cleanUserId = String(user.Identifier || "").replace(/^\$/, "");
+        const cleanFirstName = String(user.FirstName || "").replace(/^\$/, "") || "Student";
+
+        const enrollments = await getAllEnrollments();
+        if (!enrollments || !enrollments.length) return;
+
+        const isStudent = enrollments.some(function (e) {
+            return e.OrgUnit &&
+                e.OrgUnit.Id === 6605 &&
+                e.Access &&
+                e.Access.ClasslistRoleName === "Student";
+        });
+
+        let studentId = "Not available";
+        try {
+            const userDetails = await BrightspaceFetch("GET", "/d2l/api/lp/1.49/users/" + cleanUserId);
+            if (userDetails && userDetails.OrgDefinedId) {
+                studentId = userDetails.OrgDefinedId;
+            }
+        } catch (err) {
+            console.warn("Unable to retrieve user details:", err);
+        }
+
+        const welcomeEl = document.getElementById("welcome-msg-delta");
+        const inactiveMsgEl = document.getElementById("inactive-course-msg-delta");
+
+        if (!welcomeEl || !inactiveMsgEl) {
+            console.error("Welcome widget elements not found.");
+            return;
+        }
+
+        if (!isStudent) {
+            welcomeEl.textContent = cleanFirstName + ", welcome to D2L Brightspace at Delta College!";
+            welcomeEl.style.fontSize = "1.15em";
+            return;
+        }
+
+        welcomeEl.innerHTML = cleanFirstName + ', welcome to D2L Brightspace<br>' +
+            '<span style="font-size:0.88em;font-weight:500;color:#3d6b47;">Student ID # ' + studentId + '</span>';
+
+        try {
+            const csvUrl = "https://elearning.delta.edu/content/api-apps/last-loggedin/course-sec-dates-26SP.csv";
+            const csvRes = await fetch(csvUrl, { credentials: "include" });
+            if (!csvRes.ok) throw new Error("CSV fetch failed: " + csvRes.status);
+
+            const csvText = await csvRes.text();
+            const csvRows = parseCSV(csvText);
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const sectionDateMap = buildSectionDateMap(csvRows);
+            console.log("Welcome widget section date keys loaded:", Object.keys(sectionDateMap).length);
+
+            const studentCourseEnrollments = enrollments.filter(function (e) {
+                return e.OrgUnit &&
+                    e.OrgUnit.Type &&
+                    e.OrgUnit.Type.Id === 3 &&
+                    e.Access &&
+                    e.Access.ClasslistRoleName === "Student";
+            });
+
+            const staleCourses = [];
+
+            studentCourseEnrollments.forEach(function (enrollment) {
+                const orgUnit = enrollment.OrgUnit || {};
+                const access = enrollment.Access || {};
+
+                const codeKey = normalizeCourseCode(orgUnit.Code || "");
+                const sectionKey = extractSectionKeyFromCourseCode(orgUnit.Code || "");
+                const nameKey = normalizeSectionName(orgUnit.Name || "");
+
+                const matchedDates =
+                    sectionDateMap[sectionKey] ||
+                    sectionDateMap[codeKey] ||
+                    sectionDateMap[nameKey];
+
+                if (!matchedDates) return;
+
+                const isActive = today >= matchedDates.startDate && today <= matchedDates.endDate;
+                if (!isActive) return;
+
+                const lastAccessed =
+                    access.LastAccessed ||
+                    access.LastAccessedDate ||
+                    enrollment.LastAccessed ||
+                    enrollment.LastAccessedDate ||
+                    null;
+                const minutesAway = minutesSince(lastAccessed);
+
+                if (minutesAway === null || minutesAway >= inactivityMinutes) {
+                    staleCourses.push({
+                        label: orgUnit.Code ? orgUnit.Code.replace(/-COURSE$/i, "") : (orgUnit.Name || "Course"),
+                        minutesAway: minutesAway,
+                        orgUnitId: orgUnit.Id
+                    });
+                }
+            });
+
+            console.log("Inactive matched courses:", staleCourses);
+
+            if (staleCourses.length > 0) {
+                const firstCourse = staleCourses[0];
+                const linkedCourse = courseLinkHtml(firstCourse.label, firstCourse.orgUnitId);
+                const messageHtml = firstCourse.minutesAway === null
+                    ? "You have not entered " + linkedCourse + " yet."
+                    : "You have not entered " + linkedCourse + " in the last " + formatElapsedTime(firstCourse.minutesAway) + ".";
+
+                inactiveMsgEl.innerHTML = renderInactiveAlert(messageHtml);
+            } else {
+                inactiveMsgEl.innerHTML = "";
+            }
+        } catch (err) {
+            console.error("Student inactivity check failed:", err);
+        }
+    }
+
+    displayRoleBasedMessage();
+});
+</script></p>
