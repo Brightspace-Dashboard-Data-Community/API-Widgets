@@ -2,7 +2,7 @@
 
 Custom **Brightspace (D2L) homepage widgets** shared by the [Brightspace Dashboard Data Community](https://github.com/Brightspace-Dashboard-Data-Community).
 
-These widgets run in the browser on your Brightspace homepage. They use built-in D2L APIs and CSV files you host in **Manage Files**—no separate server or OAuth application required.
+These widgets run in the browser on your Brightspace homepage. They use built-in D2L APIs, Content topics, and/or CSV files you host in **Manage Files**—no separate server or OAuth application required.
 
 ---
 
@@ -12,6 +12,7 @@ These widgets run in the browser on your Brightspace homepage. They use built-in
 |--------|--------|-------------|
 | **D2L Welcome Message** | [`D2L Welcome Message/`](./D2L%20Welcome%20Message/) | Personalized welcome by role; nudges students who have not accessed an active course in 4+ days |
 | **Upcoming Courses** | [`Upcoming Courses/`](./Upcoming%20Courses/) | Shows a student's or instructor's enrolled courses for the upcoming term from an SIS enrollment CSV |
+| **Tech Tips** | [`Tech Tips/`](./Tech%20Tips/) | Faculty-only random D2L tech tips loaded from a Content topic in your organization |
 
 Each folder contains the widget HTML and, where available, a README with setup and adaptation instructions.
 
@@ -22,8 +23,8 @@ Each folder contains the widget HTML and, where available, a README with setup a
 1. Open the widget folder you need.
 2. Read the README (if present) for CSV and configuration requirements.
 3. Copy the `.html` file contents into a Brightspace **Custom Widget** or homepage HTML widget.
-4. Upload any required CSV files to **Manage Files** on your Brightspace site.
-5. Update institution-specific settings (URLs, org unit IDs, term codes, branding).
+4. Upload any required CSV files to **Manage Files**, or create a **Content topic** for tips-based widgets.
+5. Update institution-specific settings (URLs, org unit IDs, topic IDs, term codes, branding).
 
 ---
 
@@ -39,7 +40,7 @@ To add a widget:
 
 ## Credits
 
-Widgets in this repository are maintained by Brightspace administrators in the community. The **D2L Welcome Message** widget was developed by Delta College eLearning.
+Widgets in this repository are maintained by Brightspace administrators in the community. Several widgets were developed by **Delta College** eLearning, including D2L Welcome Message, Upcoming Courses, and Tech Tips.
 
 ---
 
