@@ -25,6 +25,12 @@ The widget renders a styled accordion (`<details>` / `<summary>`) with these sec
 
 ---
 
+## Screenshot
+
+![Faculty Navigation Menu widget](faculty-information-menu.jpg)
+
+---
+
 ## How it works
 
 ### Static sections

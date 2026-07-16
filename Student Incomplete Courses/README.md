@@ -20,6 +20,12 @@ Originally built for **Delta College**. Intended for **student-facing** homepage
 
 ---
 
+## Screenshot
+
+![Student Incomplete Courses widget](Incomplete-Student.jpg)
+
+---
+
 ## How it works
 
 ```mermaid

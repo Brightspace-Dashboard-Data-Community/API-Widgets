@@ -29,6 +29,12 @@ If a student or faculty member has multiple rows for the same person + section +
 
 ---
 
+## Screenshot
+
+![Upcoming Courses widget](Upcoming-Courses-Widget.jpg)
+
+---
+
 ## How it works
 
 ```mermaid

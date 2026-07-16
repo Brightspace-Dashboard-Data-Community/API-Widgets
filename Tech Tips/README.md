@@ -17,6 +17,12 @@ This widget is intended for **faculty-facing** homepages. Place it on a homepage
 
 ---
 
+## Screenshot
+
+![D2L Tech Tips widget](D2L-Tech-Tip.jpg)
+
+---
+
 ## How it works
 
 ```mermaid

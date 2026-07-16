@@ -29,6 +29,12 @@ Only the **first** matching stale course is shown per page load.
 
 ---
 
+## Screenshot
+
+![D2L Welcome Message widget](D2L-welcome-widget.jpg)
+
+---
+
 ## How it works
 
 ```mermaid

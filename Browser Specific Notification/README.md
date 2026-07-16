@@ -21,6 +21,12 @@ Only **one** message is shown per page load. Chromebook is checked first, then M
 
 ---
 
+## Screenshot
+
+![Browser Specific Notification widget](browser-specific-notification.jpg)
+
+---
+
 ## How it works
 
 ```mermaid

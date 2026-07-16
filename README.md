@@ -22,6 +22,44 @@ Each folder contains the widget HTML and, where available, a README with setup a
 
 ---
 
+## Widget screenshots
+
+### D2L Welcome Message
+
+![D2L Welcome Message widget](D2L%20Welcome%20Message/D2L-welcome-widget.jpg)
+
+### Upcoming Courses
+
+![Upcoming Courses widget](Upcoming%20Courses/Upcoming-Courses-Widget.jpg)
+
+### Tech Tips
+
+![D2L Tech Tips widget](Tech%20Tips/D2L-Tech-Tip.jpg)
+
+### Browser Specific Notification
+
+![Browser Specific Notification widget](Browser%20Specific%20Notification/browser-specific-notification.jpg)
+
+### Faculty Navigation Menu
+
+![Faculty Navigation Menu widget](Faculty%20Navigation%20Menu/faculty-information-menu.jpg)
+
+### Faculty Incomplete Students
+
+The three images show the widget’s privacy states: the initial count-only view, expanded details with names blurred, and names deliberately revealed by the instructor. See the [widget README](./Faculty%20Incomplete%20Students/) for the full privacy explanation.
+
+![Faculty Incomplete Students — count only](Faculty%20Incomplete%20Students/FAC-Incomplete-Student-1.jpg)
+
+![Faculty Incomplete Students — names blurred](Faculty%20Incomplete%20Students/FAC-Incomplete-Student-2.jpg)
+
+![Faculty Incomplete Students — names revealed](Faculty%20Incomplete%20Students/FAC-Incomplete-Student-3.jpg)
+
+### Student Incomplete Courses
+
+![Student Incomplete Courses widget](Student%20Incomplete%20Courses/Incomplete-Student.jpg)
+
+---
+
 ## Quick start
 
 1. Open the widget folder you need.
