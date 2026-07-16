@@ -28,6 +28,8 @@ Each folder contains the widget HTML and, where available, a README with setup a
 4. Upload any required CSV files to **Manage Files**, or create a **Content topic** for tips-based widgets.
 5. Update institution-specific settings (URLs, org unit IDs, topic IDs, term codes, branding).
 
+**Delta College staff:** use production-ready copies in [`delta-production/`](./delta-production/) (gitignored, not on GitHub) when pasting into live D2L.
+
 ---
 
 ## Contributing
