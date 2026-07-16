@@ -17,6 +17,7 @@ These widgets run in the browser on your Brightspace homepage. They use built-in
 | **Faculty Navigation Menu** | [`Faculty Navigation Menu/`](./Faculty%20Navigation%20Menu/) | Faculty accordion with training links, grade due dates, and sandbox course creation |
 | **Faculty Incomplete Students** | [`Faculty Incomplete Students/`](./Faculty%20Incomplete%20Students/) | Count and list of students with Incomplete role across instructor courses |
 | **Student Incomplete Courses** | [`Student Incomplete Courses/`](./Student%20Incomplete%20Courses/) | Student view of incomplete course enrollments with instructor and course link |
+| **ZZStudent Demo** | [`ZZStudent Demo/`](./ZZStudent%20Demo/) | Course-homepage enroll/unenroll of a demo student (ZZStudent) for impersonation |
 
 Each folder contains the widget HTML and, where available, a README with setup and adaptation instructions.
 
@@ -58,6 +59,10 @@ The three images show the widget’s privacy states: the initial count-only view
 
 ![Student Incomplete Courses widget](Student%20Incomplete%20Courses/Incomplete-Student.jpg)
 
+### ZZStudent Demo
+
+![ZZStudent Demo widget](ZZStudent%20Demo/ZZStudent-Demo.jpg)
+
 ---
 
 ## Quick start
@@ -84,7 +89,7 @@ To add a widget:
 
 ## Credits
 
-Widgets in this repository are maintained by Brightspace administrators in the community. Several widgets were developed by **Delta College** eLearning, including D2L Welcome Message, Upcoming Courses, Tech Tips, Browser Specific Notification, Faculty Navigation Menu, Faculty Incomplete Students, and Student Incomplete Courses.
+Widgets in this repository are maintained by Brightspace administrators in the community. Several widgets were developed by **Delta College** eLearning, including D2L Welcome Message, Upcoming Courses, Tech Tips, Browser Specific Notification, Faculty Navigation Menu, Faculty Incomplete Students, Student Incomplete Courses, and ZZStudent Demo.
 
 ---
 
