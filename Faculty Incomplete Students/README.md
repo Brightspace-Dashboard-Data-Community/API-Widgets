@@ -19,6 +19,24 @@ Students are deduplicated per course + name. Both **active classlist** and **LP 
 
 ---
 
+## Screenshots
+
+Three screenshots document the widget’s **progressive disclosure** design. Incomplete student information is sensitive; instructors often display their D2L homepage on a projector or shared screen in class, labs, or meetings. The widget keeps that data private until the instructor deliberately reveals it.
+
+| Screenshot | What it shows |
+|------------|----------------|
+| **1** — `FAC-Incomplete-Student-1.jpg` | **Default view.** Only the incomplete count is visible. No student names or course detail are shown. Safe to leave on screen while others are watching. |
+| **2** — `FAC-Incomplete-Student-2.jpg` | **Details expanded, names still blurred.** After clicking **Show Details**, the list appears but every student name remains blurred. Others in the room can see that details exist without reading who is incomplete. |
+| **3** — `FAC-Incomplete-Student-3.jpg` | **Fully exposed.** The instructor has clicked individual names to remove the blur. This state is intentional and should only be used when the instructor is working privately or has confirmed no one else can see the screen. |
+
+![Default view — count only](FAC-Incomplete-Student-1.jpg)
+
+![Show Details — names blurred](FAC-Incomplete-Student-2.jpg)
+
+![Names revealed after click](FAC-Incomplete-Student-3.jpg)
+
+---
+
 ## How it works
 
 ```mermaid
@@ -59,6 +77,9 @@ A student matches if any of the following are true:
 | File | Description |
 |------|-------------|
 | `faculty-incomplete-students-widget.html` | Complete widget markup + inline CSS + JavaScript |
+| `FAC-Incomplete-Student-1.jpg` | Screenshot — default count-only view |
+| `FAC-Incomplete-Student-2.jpg` | Screenshot — details expanded, names blurred |
+| `FAC-Incomplete-Student-3.jpg` | Screenshot — names revealed after instructor click |
 | `README.md` | This documentation |
 
 ---
@@ -113,7 +134,7 @@ var INSTRUCTOR_ROLE_ID = 102;
 
 ### Privacy
 
-Names are blurred (`filter: blur(6px)`) until the instructor clicks a name. Adjust or remove blur in the `populateWidget` HTML template if your policy differs.
+Names are blurred (`filter: blur(6px)`) until the instructor clicks a name. This protects student identity when the homepage is visible on a shared or classroom display—see [Screenshots](#screenshots) for the three disclosure states. Adjust or remove blur in the `populateWidget` HTML template if your policy differs.
 
 ---
 
