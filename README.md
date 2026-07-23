@@ -18,6 +18,7 @@ These widgets run in the browser on your Brightspace homepage. They use built-in
 | **Faculty Incomplete Students** | [`Faculty Incomplete Students/`](./Faculty%20Incomplete%20Students/) | Count and list of students with Incomplete role across instructor courses |
 | **Student Incomplete Courses** | [`Student Incomplete Courses/`](./Student%20Incomplete%20Courses/) | Student view of incomplete course enrollments with instructor and course link |
 | **ZZStudent Demo** | [`ZZStudent Demo/`](./ZZStudent%20Demo/) | Course-homepage enroll/unenroll of a demo student (ZZStudent) for impersonation |
+| **Office Hours Chat** | [`Office Hours Chat/`](./Office%20Hours%20Chat/) | Live instructor–student office hours chat with waiting room and transcripts |
 
 Each folder contains the widget HTML and, where available, a README with setup and adaptation instructions.
 
@@ -63,6 +64,10 @@ The three images show the widget’s privacy states: the initial count-only view
 
 ![ZZStudent Demo widget](ZZStudent%20Demo/ZZStudent-Demo.jpg)
 
+### Office Hours Chat
+
+See the [Office Hours Chat README](./Office%20Hours%20Chat/) for setup. Add `office-hours-chat.jpg` to that folder when a screenshot is available.
+
 ---
 
 ## Quick start
@@ -89,7 +94,7 @@ To add a widget:
 
 ## Credits
 
-Widgets in this repository are maintained by Brightspace administrators in the community. Several widgets were developed by **Delta College** eLearning, including D2L Welcome Message, Upcoming Courses, Tech Tips, Browser Specific Notification, Faculty Navigation Menu, Faculty Incomplete Students, Student Incomplete Courses, and ZZStudent Demo.
+Widgets in this repository are maintained by Brightspace administrators in the community. Several widgets were developed by **Delta College** eLearning, including D2L Welcome Message, Upcoming Courses, Tech Tips, Browser Specific Notification, Faculty Navigation Menu, Faculty Incomplete Students, Student Incomplete Courses, ZZStudent Demo, and Office Hours Chat.
 
 ---
 
