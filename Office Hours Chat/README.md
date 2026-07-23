@@ -1,6 +1,6 @@
 # Office Hours Chat Widget
 
-A custom **Brightspace (D2L) course homepage Custom Widget** that runs **live office hours chat** between an instructor and students: open/close hours, a waiting room, private chats (including multiple concurrent chats), and downloadable transcripts.
+A custom **Brightspace (D2L) course homepage Widget** that runs **live office hours chat** between an instructor and students: open/close hours, a waiting room, private chats (including multiple concurrent chats), and downloadable transcripts.
 
 Originally built for **Delta College**. Must be pasted into a **Custom Widget** on a **course homepage** (not a Content topic), because it depends on Brightspace replace strings and the **Custom Widget Data API**.
 
