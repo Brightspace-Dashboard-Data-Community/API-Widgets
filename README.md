@@ -66,7 +66,11 @@ The three images show the widget’s privacy states: the initial count-only view
 
 ### Office Hours Chat
 
-See the [Office Hours Chat README](./Office%20Hours%20Chat/) for setup. Add `office-hours-chat.jpg` to that folder when a screenshot is available.
+Instructor view in the two office-hours states. See the [widget README](./Office%20Hours%20Chat/) for setup details.
+
+![Office hours closed](Office%20Hours%20Chat/office-hours-chat-closed.jpg)
+
+![Office hours open](Office%20Hours%20Chat/office-hour-chat-open.jpg)
 
 ---
 

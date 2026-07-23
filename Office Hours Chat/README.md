@@ -27,13 +27,18 @@ Originally built for **Delta College**. Must be pasted into a **Custom Widget** 
 
 ---
 
-## Screenshot
+## Screenshots
 
-Add a screenshot named `office-hours-chat.jpg` to this folder when available, then embed it here:
+Two instructor-view screenshots show the office-hours open/closed states.
 
-```markdown
-![Office Hours Chat widget](office-hours-chat.jpg)
-```
+| Screenshot | What it shows |
+|------------|----------------|
+| **Closed** — `office-hours-chat-closed.jpg` | Office hours are closed. Green **Open Office Hours** button; waiting room is hidden until hours open. |
+| **Open** — `office-hour-chat-open.jpg` | Office hours are open. Red **Close Office Hours** button; Active Chats and Waiting Room panels are ready for students. |
+
+![Office hours closed](office-hours-chat-closed.jpg)
+
+![Office hours open](office-hour-chat-open.jpg)
 
 ---
 
@@ -92,6 +97,8 @@ These **only** work in a **Custom Widget**. Content topics will not replace them
 | File | Description |
 |------|-------------|
 | `office-hours-chat-widget.html` | Complete widget markup + CSS + JavaScript |
+| `office-hours-chat-closed.jpg` | Screenshot — instructor view, office hours closed |
+| `office-hour-chat-open.jpg` | Screenshot — instructor view, office hours open |
 | `README.md` | This documentation |
 
 ---
