@@ -1,13 +1,30 @@
 <!--
-  Brightspace Office Hours Chat Widget
-  Paste into a D2L Custom Widget on a COURSE homepage (not a Content topic).
-  Requires Brightspace replace strings: {OrgUnitId}, {widgetid}, {RoleName}
-  Uses the Custom Widget Data API for shared + per-user chat state.
+  Live Office Hours — Brightspace Custom Widget
+  ==============================================
+  Paste this entire file into a Custom Widget (HTML Source view).
+
+  Setup
+  1. Admin Tools → Widgets → Create Custom Widget → paste this HTML.
+  2. On the course homepage, add the widget (Homepage → Edit → Add Widgets).
+  3. Ensure roles can use Custom Widget Data:
+       • Instructors: View / Manage Custom Widget Data for the org unit
+         and View other users' Custom Widget Data (needed to see the waiting room)
+       • Students: View / Manage their Own Custom Widget Data
+       Note: Instructors do NOT need Manage-other-users write permission —
+       admission and instructor messages are stored in shared widget data.
+  4. Brightspace replaces {OrgUnitId}, {widgetid}, and {RoleName} automatically.
+     You normally do NOT need to edit course ID or instructor IDs.
+
+  Instructor view shows Open / Close Office Hours and can run multiple student
+  chats at once. Students see Join Waiting Room when hours are open.
+  Ending a chat automatically downloads the transcript for the instructor.
 -->
 <div id="ohw-app">
-<div id="ohw-loading" style="padding: 24px; text-align: center; font-family: Arial,sans-serif; color: #4b5563;">Loading Office Hours…</div>
+  <div id="ohw-loading" style="padding:24px;text-align:center;font-family:Arial,sans-serif;color:#4b5563;">
+    Loading Office Hours…
+  </div>
 </div>
-<p><script>
+<script>
 (function () {
   "use strict";
 
@@ -643,6 +660,49 @@
     return date.toLocaleString();
   }
 
+  /** Local computer time for chat logs: mm-dd-yyyy h:mmAM/PM (e.g. 07-23-2026 4:45PM). */
+  function formatLogDateTime(iso) {
+    if (!iso) return "";
+    const date = iso instanceof Date ? iso : new Date(iso);
+    if (Number.isNaN(date.getTime())) return String(iso);
+
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    const yyyy = date.getFullYear();
+
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12;
+    if (hours === 0) hours = 12;
+
+    return mm + "-" + dd + "-" + yyyy + " " + hours + ":" + minutes + ampm;
+  }
+
+  function resolveOrgDefinedId(studentId) {
+    studentId = Number(studentId);
+
+    if (state.me && Number(state.me.Identifier) === studentId) {
+      return String(state.me.OrgDefinedId || state.me.OrgDefinedID || "").trim();
+    }
+
+    const fromClasslist = (state.classlist || []).find(function (entry) {
+      return Number(entry.Identifier) === studentId;
+    });
+    if (fromClasslist) {
+      return String(fromClasslist.OrgDefinedId || fromClasslist.OrgDefinedID || "").trim();
+    }
+
+    const session = (state.activeSessions || []).find(function (entry) {
+      return Number(entry.user && entry.user.Identifier) === studentId;
+    });
+    if (session && session.user) {
+      return String(session.user.OrgDefinedId || session.user.OrgDefinedID || "").trim();
+    }
+
+    return "";
+  }
+
   function minutesWaiting(iso) {
     if (!iso) return 0;
     return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
@@ -1117,15 +1177,18 @@
       return false;
     }
 
+    const orgDefinedId = resolveOrgDefinedId(studentId);
+    const studentOrgLabel = orgDefinedId || "Unavailable";
+
     const lines = [
       "BRIGHTSPACE OFFICE HOURS CHAT LOG",
       "",
       "Course ID: " + state.courseId,
-      "Student D2L User ID: " + studentId,
+      "Student Organization ID: " + studentOrgLabel,
       "Session ID: " + (data.sessionId || shared.sessionId || ""),
-      "Joined: " + (data.joinedAt || ""),
-      "Activated: " + (data.activatedAt || ""),
-      "Generated: " + new Date().toISOString(),
+      "Joined: " + formatLogDateTime(data.joinedAt),
+      "Activated: " + formatLogDateTime(data.activatedAt),
+      "Generated: " + formatLogDateTime(new Date()),
       "",
       "------------------------------------------------------------",
       ""
@@ -1133,10 +1196,10 @@
 
     data.messages.forEach(function (message) {
       const label = message.sender === "student"
-        ? "STUDENT " + studentId
+        ? "STUDENT " + studentOrgLabel
         : "INSTRUCTOR";
 
-      lines.push("[" + message.timestamp + "] " + label);
+      lines.push("[" + formatLogDateTime(message.timestamp) + "] " + label);
       lines.push(message.text);
       lines.push("");
     });
@@ -1148,10 +1211,11 @@
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const fileStudentId = (orgDefinedId || String(studentId)).replace(/[^A-Za-z0-9_-]/g, "");
 
     link.href = url;
     link.download = "office-hours-course-" + state.courseId +
-      "-student-" + studentId + "-" + stamp + ".txt";
+      "-student-" + fileStudentId + "-" + stamp + ".txt";
 
     document.body.appendChild(link);
     link.click();
@@ -1888,4 +1952,4 @@
 
   initialize();
 })();
-</script></p>
+</script>
