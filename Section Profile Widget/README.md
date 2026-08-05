@@ -102,27 +102,27 @@ Use this when instructors should configure section profiles **inside the course*
 ### Recommended: hidden Content module + HTML topic
 
 1. Open the course → **Course Admin → Manage Files**.
-2. Upload to the course files root (or an `Instructor Tools` folder):
-   - `section-profile-builder.html` (required)
-   - Optionally `course-tool-topic.html` (iframe shell)
-3. Open **Content**.
-4. Create a module named something like **Instructor Tools**.
-5. Add the builder as a topic using one of these methods:
+2. Upload **`section-profile-builder.html`** to the **course files root** (required — this is what the tool actually runs).
+3. Open **Content** and create a module such as **Instructor Tools** / **Section Instructor Profile Generator**.
+4. Add the builder using **one** of these methods:
 
-   **Method A — Upload / link the builder file**
-   - Create a topic from the uploaded `section-profile-builder.html` file (or add a quicklink to it).
-   - Opening the topic runs the builder same-origin in Brightspace.
+   **Method A — Easiest (recommended)**  
+   Create a topic from the uploaded file itself: **Create New → Upload File** (or add the Manage Files item).  
+   Title it “Section Profile Config Builder”.  
+   Do **not** rely on `course-tool-topic.html` for this method.
 
-   **Method B — HTML topic + iframe shell**
-   - Create a new **HTML** topic and paste the contents of `course-tool-topic.html`.
-   - Ensure the iframe `src` points at `section-profile-builder.html` in the same folder (or the full `/content/enforced/{OrgUnitId}/…` path).
+   **Method B — HTML shell topic**  
+   Create an HTML topic and paste `course-tool-topic.html`.  
+   The shell looks up `/content/enforced/{OrgUnitId}/section-profile-builder.html`.  
+   If you see **Page Not Found** inside the frame, the builder file is not in Manage Files root yet (Method A avoids this).
 
-6. **Hide from students**
-   - Set the module (or topic) to **Hidden** / hide from users, **or**
-   - Add a **release condition**: role = Instructor (and Admin if desired).
-7. Confirm students cannot see the module in the TOC.
-8. As an instructor, open the topic, map sections, and **Publish to Manage Files**.
-9. Add the **student** widget (`section-profile-widget.html`) to the course homepage separately (see [Installation](#installation)).
+5. **Hide from students** — hide the module/topic, or use a release condition for Instructor (and Admin).
+6. Open the topic as an instructor, map sections, and **Publish to Manage Files**.
+7. Add the **student** widget (`section-profile-widget.html`) to the course homepage separately.
+
+### Why relative iframes fail in Content
+
+Brightspace often serves topic HTML from a Content viewer URL, so `src="section-profile-builder.html"` resolves to the wrong place and shows **Page Not Found**. Always upload the builder to Manage Files and either open that file as the topic (Method A) or use the shell that targets `/content/enforced/{OrgUnitId}/…` (Method B).
 
 ### Tips for the course tool
 
