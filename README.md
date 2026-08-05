@@ -19,6 +19,7 @@ These widgets run in the browser on your Brightspace homepage. They use built-in
 | **Student Incomplete Courses** | [`Student Incomplete Courses/`](./Student%20Incomplete%20Courses/) | Student view of incomplete course enrollments with instructor and course link |
 | **ZZStudent Demo** | [`ZZStudent Demo/`](./ZZStudent%20Demo/) | Course-homepage enroll/unenroll of a demo student (ZZStudent) for impersonation |
 | **Office Hours Chat** | [`Office Hours Chat/`](./Office%20Hours%20Chat/) | Live instructor–student office hours chat with waiting room and transcripts |
+| **Section Profile Widget** | [`Section Profile Widget/`](./Section%20Profile%20Widget/) | Section-aware instructor profile card for multi-section courses |
 
 Each folder contains the widget HTML and, where available, a README with setup and adaptation instructions.
 
@@ -72,6 +73,12 @@ Instructor view in the two office-hours states. See the [widget README](./Office
 
 ![Office hours open](Office%20Hours%20Chat/office-hour-chat-open.jpg)
 
+### Section Profile Widget
+
+Learner view of the section-specific instructor card. See the [widget README](./Section%20Profile%20Widget/) for course-level and org-level setup.
+
+![Section Profile Widget](Section%20Profile%20Widget/section-profile-widget.png)
+
 ---
 
 ## Quick start
@@ -98,7 +105,7 @@ To add a widget:
 
 ## Credits
 
-Widgets in this repository are maintained by Brightspace administrators in the community. Several widgets were developed by **Delta College** eLearning, including D2L Welcome Message, Upcoming Courses, Tech Tips, Browser Specific Notification, Faculty Navigation Menu, Faculty Incomplete Students, Student Incomplete Courses, ZZStudent Demo, and Office Hours Chat.
+Widgets in this repository are maintained by Brightspace administrators in the community. Several widgets were developed by **Delta College** eLearning, including D2L Welcome Message, Upcoming Courses, Tech Tips, Browser Specific Notification, Faculty Navigation Menu, Faculty Incomplete Students, Student Incomplete Courses, ZZStudent Demo, Office Hours Chat, and Section Profile Widget.
 
 ---
 
