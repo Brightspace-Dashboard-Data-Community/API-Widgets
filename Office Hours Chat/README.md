@@ -46,7 +46,7 @@ Two instructor-view screenshots show the office-hours open/closed states.
 
 ```mermaid
 flowchart TD
-    A[Course homepage Custom Widget loads] --> B[Replace {OrgUnitId} {widgetid} {RoleName}]
+    A[Course homepage Custom Widget loads] --> B["Replace {OrgUnitId} {widgetid} {RoleName}"]
     B --> C[whoami + role detect]
     C --> D{Instructor?}
     D -->|Yes| E[Read shared widget data]
