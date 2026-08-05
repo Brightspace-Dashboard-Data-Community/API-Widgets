@@ -19,7 +19,7 @@ These widgets run in the browser on your Brightspace homepage. They use built-in
 | **Student Incomplete Courses** | [`Student Incomplete Courses/`](./Student%20Incomplete%20Courses/) | Student view of incomplete course enrollments with instructor and course link |
 | **ZZStudent Demo** | [`ZZStudent Demo/`](./ZZStudent%20Demo/) | Course-homepage enroll/unenroll of a demo student (ZZStudent) for impersonation |
 | **Office Hours Chat** | [`Office Hours Chat/`](./Office%20Hours%20Chat/) | Live instructor–student office hours chat with waiting room and transcripts |
-| **Section Profile Widget** | [`Section Profile Widget/`](./Section%20Profile%20Widget/) | Section-aware instructor profile card for multi-section courses |
+| **Section Profile Widget** | [`Section Profile Widget/`](./Section%20Profile%20Widget/) | Section-aware instructor profile card; includes config builder + hidden course-tool install docs |
 
 Each folder contains the widget HTML and, where available, a README with setup and adaptation instructions.
 

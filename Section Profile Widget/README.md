@@ -59,25 +59,113 @@ All requests use the browser session (`credentials: "include"`). API paths are *
 
 | File | Description |
 |------|-------------|
-| `section-profile-widget.html` | **Prefer this** — paste into a Brightspace Custom Widget |
+| `section-profile-widget.html` | **Student-facing** — paste into a Brightspace Custom Widget on the course homepage |
+| `section-profile-builder.html` | Interactive config tool for instructors and admins (JSON + resized photos) |
+| `course-tool-topic.html` | Optional Content topic shell that iframes the builder (for hidden instructor modules) |
 | `section-instructors.json` | Sample config — replace IDs, names, and contact details |
 | `sample-instructor-a.jpg` / `sample-instructor-b.jpg` | Optional sample photos for local testing |
-| `embed-snippet.html` | Optional iframe embed if you host the HTML file in Manage Files |
+| `embed-snippet.html` | Optional iframe embed if you host the student widget HTML in Manage Files |
 | `section-profile-widget.png` | Screenshot |
 | `README.md` | This documentation |
 
 ---
 
-## Requirements
+## Config Builder (instructors & admins)
 
-- **Course homepage** Custom Widget (so `{OrgUnitId}` is replaced and the learner is in a course context)
-- Course uses **Sections** and learners are assigned to sections
-- Permission for learners to call **`sections/mysections`** (standard for Student in most orgs)
-- Ability to upload JSON (and optional images) to **Manage Files** for each course, or a shared multi-course JSON (advanced)
+`section-profile-builder.html` builds and publishes the widget config interactively—no hand-editing JSON required.
+
+### What the builder does
+
+1. **Course** — list teaching courses (`myenrollments` + instructor role) or search by org unit ID / course code (admins)
+2. **Sections** — load `/sections/` for the offering; import an existing `section-instructors.json` if present
+3. **Instructors** — add profiles manually or suggest from course instructor enrollments; upload a photo (auto **400×400 JPEG**)
+4. **Map** — assign each section to an instructor; set a default; live preview the student card
+5. **Publish** — download JSON/images, or upload straight to the course Manage Files root
+
+When opened from inside a course (Manage Files / Content path, or `?courseId=`), the builder detects the offering, shows **Course tool mode**, and jumps to that course’s sections.
+
+### Who can use it
+
+| Audience | How they pick courses | Typical publish permission |
+|----------|----------------------|----------------------------|
+| **Instructor** | “My teaching courses” or course-context auto-select | Manage Files on courses they teach |
+| **Admin** | Teaching list **or** Search / ID | Manage Files on target courses |
+
+Role IDs are configurable in the builder `CONFIG` block (`INSTRUCTOR_ROLE_IDS`, default `102`).
 
 ---
 
-## Installation
+## Add the builder as a hidden course tool
+
+Use this when instructors should configure section profiles **inside the course**, without giving students access.
+
+### Recommended: hidden Content module + HTML topic
+
+1. Open the course → **Course Admin → Manage Files**.
+2. Upload to the course files root (or an `Instructor Tools` folder):
+   - `section-profile-builder.html` (required)
+   - Optionally `course-tool-topic.html` (iframe shell)
+3. Open **Content**.
+4. Create a module named something like **Instructor Tools**.
+5. Add the builder as a topic using one of these methods:
+
+   **Method A — Upload / link the builder file**
+   - Create a topic from the uploaded `section-profile-builder.html` file (or add a quicklink to it).
+   - Opening the topic runs the builder same-origin in Brightspace.
+
+   **Method B — HTML topic + iframe shell**
+   - Create a new **HTML** topic and paste the contents of `course-tool-topic.html`.
+   - Ensure the iframe `src` points at `section-profile-builder.html` in the same folder (or the full `/content/enforced/{OrgUnitId}/…` path).
+
+6. **Hide from students**
+   - Set the module (or topic) to **Hidden** / hide from users, **or**
+   - Add a **release condition**: role = Instructor (and Admin if desired).
+7. Confirm students cannot see the module in the TOC.
+8. As an instructor, open the topic, map sections, and **Publish to Manage Files**.
+9. Add the **student** widget (`section-profile-widget.html`) to the course homepage separately (see [Installation](#installation)).
+
+### Tips for the course tool
+
+- Keep the builder topic out of student pathways (no navbar link for students).
+- Publishing writes `section-instructors.json` (+ photos) to the course Manage Files root—the same place the homepage widget reads.
+- You can still use org-wide Faculty / Admin dashboards; the hidden course topic is optional convenience for multi-section instructors.
+
+### Other hosting options
+
+| Placement | Notes |
+|-----------|--------|
+| **Admin Reports & Tools** | Link `section-profile-builder.html` from your admin dashboard (search any course by ID/code). |
+| **Faculty tools hub** | Host the builder on a faculty-only site and list it under course tools. |
+| **Public / Shared Files** | Host once org-wide; open with `?courseId={OrgUnitId}` when deep-linking from a course. |
+
+Do **not** rely on `{OrgUnitId}` replace strings inside the builder itself—it discovers courses via APIs (and URL context). The **student widget** still uses `{OrgUnitId}` as documented below.
+
+### Builder `CONFIG` (adapt per org)
+
+```javascript
+const CONFIG = Object.freeze({
+  LP_VERSION: "1.51",
+  INSTRUCTOR_ROLE_IDS: [102],
+  INSTRUCTOR_ROLE_NAMES: ["instructor", "teacher", "faculty"],
+  IMAGE_SIZE: 400,
+  IMAGE_QUALITY: 0.85,
+  CONFIG_FILE_NAME: "section-instructors.json"
+});
+```
+
+---
+
+## Requirements
+
+- **Course homepage** Custom Widget for the **student** card (so `{OrgUnitId}` is replaced)
+- Course uses **Sections** and learners are assigned to sections
+- Permission for learners to call **`sections/mysections`** (standard for Student in most orgs)
+- Ability to upload JSON (and optional images) to **Manage Files** for each course, or a shared multi-course JSON (advanced)
+- Instructors/admins who use the builder need Manage Files **write** on the target course
+
+---
+
+## Installation (student widget)
 
 You can share the **widget HTML once** at the organization (homepage template / shared custom widget) while keeping **per-course JSON**, or configure everything inside a single course. Both approaches use the same HTML file.
 
@@ -85,17 +173,14 @@ You can share the **widget HTML once** at the organization (homepage template / 
 
 Best for a pilot or one multi-section offering.
 
-1. In the course, open **Course Admin → Manage Files**.
-2. Upload to the **root** of the course files:
+1. Use the [Config Builder](#config-builder-instructors--admins) (or upload JSON manually) so Manage Files contains:
    - `section-instructors.json`
-   - Instructor images referenced by the JSON (e.g. `sample-instructor-a.jpg`)
-3. Edit `section-instructors.json`:
-   - Replace sample instructor details with real profiles
-   - Map each section ID (recommended) — see [Finding section IDs](#finding-section-ids)
-4. Open **Course Admin → Homepages** (or edit the course homepage).
-5. Create a **Custom Widget**, open the HTML source editor, and paste the full contents of `section-profile-widget.html`.
-6. Confirm `CONFIG.CONFIG_URL` still contains `{OrgUnitId}` (do not hardcode unless testing).
-7. Save, place the widget on the homepage (sidebar works well), and test by impersonating learners in different sections.
+   - Instructor images referenced by the JSON
+2. Open **Course Admin → Homepages** (or edit the course homepage).
+3. Create a **Custom Widget**, open the HTML source editor, and paste the full contents of `section-profile-widget.html`.
+4. Confirm `CONFIG.CONFIG_URL` still contains `{OrgUnitId}` (do not hardcode unless testing).
+5. Save, place the widget on the homepage (sidebar works well), and test by impersonating learners in different sections.
+6. Optionally add the [hidden course builder topic](#add-the-builder-as-a-hidden-course-tool) so instructors can update profiles later.
 
 ### Option B — Org-level widget, per-course config (recommended for scale)
 
@@ -245,13 +330,13 @@ const CONFIG = Object.freeze({
 
 ## Customization checklist
 
-- [ ] Paste into a **Custom Widget** on a **course** homepage (or shared course template)
-- [ ] Confirm `{OrgUnitId}` is replaced at runtime
-- [ ] Upload `section-instructors.json` (+ images) to Manage Files
+- [ ] Paste student widget into a **Custom Widget** on a **course** homepage (or shared course template)
+- [ ] Confirm `{OrgUnitId}` is replaced at runtime on the student widget
+- [ ] Publish `section-instructors.json` (+ images) via the builder or Manage Files
 - [ ] Map real **Section IDs** to instructor keys
-- [ ] Replace sample emails/phones with production values
+- [ ] Optional: add builder as a **hidden** instructor Content topic (`course-tool-topic.html`)
 - [ ] Impersonate a learner in Section A and Section B — profiles should differ
-- [ ] Set `DEBUG` to `false` before production
+- [ ] Set builder/widget `DEBUG` to `false` before production
 
 ---
 

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Section Profile Setup (Instructor Tool)</title>
+  <!--
+    Optional Content topic shell for a HIDDEN instructor-only module.
+
+    Setup
+    1. Upload section-profile-builder.html to this course’s Manage Files (same folder is fine).
+    2. Create a Content module such as "Instructor Tools".
+    3. Add this file as an HTML topic (or paste its contents into a new HTML topic).
+    4. Hide the module/topic from students (Hide from Users / release conditions: Instructor only).
+    5. If the builder is not in the same folder, change the iframe src below to the full
+       /content/enforced/{CourseOrgUnitId}/section-profile-builder.html path.
+  -->
+  <style>
+    html, body { margin: 0; height: 100%; background: #f4f6f8; }
+    .note {
+      margin: 0;
+      padding: 10px 14px;
+      font: 600 13px/1.4 Arial, Helvetica, sans-serif;
+      color: #00416b;
+      background: #eaf4fb;
+      border-bottom: 1px solid #b7d4ea;
+    }
+    iframe {
+      display: block;
+      width: 100%;
+      height: calc(100vh - 42px);
+      border: 0;
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+  <p class="note">Instructor tool — Section Profile Config Builder. Keep this topic hidden from students.</p>
+  <iframe
+    src="section-profile-builder.html"
+    title="Section Profile Config Builder"
+    allow="clipboard-write"
+  ></iframe>
+</body>
+</html>
