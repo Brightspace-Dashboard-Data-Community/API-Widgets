@@ -3,7 +3,9 @@
   "defaultInstructorKey": "instructor_a",
   "instructors": {
     "instructor_a": {
-      "name": "Smith, Alex",
+      "name": "Alex Smith",
+      "firstName": "Alex",
+      "lastName": "Smith",
       "title": "Instructor",
       "email": "alex.smith@example.edu",
       "phone": "555-0101",
@@ -13,7 +15,9 @@
       "image": "sample-instructor-a.jpg"
     },
     "instructor_b": {
-      "name": "Jones, Jordan",
+      "name": "Jordan Jones",
+      "firstName": "Jordan",
+      "lastName": "Jones",
       "title": "Instructor",
       "email": "jordan.jones@example.edu",
       "phone": "555-0102",

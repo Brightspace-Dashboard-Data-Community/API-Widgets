@@ -343,12 +343,49 @@
 
     .photo-box {
       text-align: center;
+      min-width: 0;
+      max-width: 160px;
     }
 
     .photo-box .avatar-preview {
       width: 120px;
       height: 120px;
       margin: 0 auto 10px;
+    }
+
+    .photo-box .file-btn {
+      display: inline-block;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--brand-deep);
+      font-size: 0.85rem;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    .photo-box .file-btn:hover {
+      background: #f3f7fb;
+    }
+
+    .photo-box input[type="file"] {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+    }
+
+    .photo-file-name {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.75rem;
+      line-height: 1.35;
+      word-break: break-word;
+      overflow-wrap: anywhere;
     }
 
     .photo-hint {
@@ -509,8 +546,20 @@
       </p>
 
       <div class="tabs" role="tablist">
+        <button type="button" id="tabCurrentCourse" aria-selected="false">Current course</button>
         <button type="button" id="tabMyCourses" aria-selected="true">My teaching courses</button>
         <button type="button" id="tabSearch" aria-selected="false">Search / ID</button>
+      </div>
+
+      <div id="currentCoursePane" class="hidden">
+        <p class="lede" style="margin-top:0;">
+          Use the Brightspace course this tool is open inside (from the Content URL
+          <code>/d2l/le/content/<strong>courseId</strong>/viewContent/…</code> — not the topic ID after <code>viewContent</code>).
+        </p>
+        <div class="row">
+          <button type="button" class="btn" id="btnUseCurrentCourse">Use current course</button>
+          <span id="currentCourseHint" class="chip" style="display:none;"></span>
+        </div>
       </div>
 
       <div id="myCoursesPane">
@@ -525,7 +574,7 @@
         <div class="row">
           <label class="field">
             Course org unit ID
-            <input type="text" id="searchOuId" placeholder="e.g. 2994358" inputmode="numeric">
+            <input type="text" id="searchOuId" placeholder="e.g. 2994358 (not the Content topic ID)" inputmode="numeric">
           </label>
           <label class="field">
             Or course code
@@ -581,15 +630,20 @@
         <div class="editor-grid" style="margin-top:12px;">
           <div class="photo-box">
             <div id="photoPreview" class="avatar-preview placeholder">No photo</div>
+            <label class="file-btn" for="photoInput">Choose photo</label>
             <input type="file" id="photoInput" accept="image/*">
-            <p class="photo-hint">Square crop, max 400px. JPEG ~85% quality.</p>
+            <span id="photoFileLabel" class="photo-file-name">No file chosen</span>
+            <p class="photo-hint">Square crop, max 400×400 JPEG (~85% quality).</p>
           </div>
           <div class="fields">
-            <label class="field">Display name *
-              <input type="text" id="fName" placeholder="Last, First">
+            <label class="field">First name *
+              <input type="text" id="fFirst" placeholder="Alex" autocomplete="given-name">
             </label>
-            <label class="field">Title
-              <input type="text" id="fTitle" placeholder="Instructor">
+            <label class="field">Last name *
+              <input type="text" id="fLast" placeholder="Smith" autocomplete="family-name">
+            </label>
+            <label class="field full">Title / role
+              <input type="text" id="fTitle" placeholder="Instructor, Professor, TA, …">
             </label>
             <label class="field">Email
               <input type="email" id="fEmail" placeholder="name@college.edu">
@@ -606,12 +660,8 @@
             <label class="field full">Bio
               <textarea id="fBio" placeholder="Short welcome message for students"></textarea>
             </label>
-            <label class="field">Internal key
-              <input type="text" id="fKey" placeholder="auto from name">
-            </label>
-            <label class="field">Image file name
-              <input type="text" id="fImageName" placeholder="instructor-key.jpg" readonly>
-            </label>
+            <input type="hidden" id="fKey" value="">
+            <input type="hidden" id="fImageName" value="">
           </div>
         </div>
         <div class="nav-actions">
@@ -796,25 +846,105 @@
 
     const paths = [window.location.pathname];
     try { paths.push(window.parent.location.pathname); } catch (e) { /* cross-origin */ }
+    try { paths.push(window.top.location.pathname); } catch (e) { /* cross-origin */ }
+    try {
+      if (document.referrer) paths.push(new URL(document.referrer).pathname);
+    } catch (e) { /* ignore */ }
 
+    // Prefer Content / home / enforced course OU (first id in these paths).
+    // /d2l/le/content/{COURSE_OU}/viewContent/{TOPIC_ID}/View  → COURSE_OU only
     const patterns = [
+      /\/d2l\/le\/content\/(\d+)(?:\/|$)/i,
       /\/content\/enforced\/(\d+)\//i,
-      /\/d2l\/le\/content\/(\d+)\//i,
       /\/d2l\/home\/(\d+)/i,
       /\/d2l\/lp\/navbars\/(\d+)\//i
     ];
 
     for (let i = 0; i < paths.length; i++) {
       for (let p = 0; p < patterns.length; p++) {
-        const match = paths[i].match(patterns[p]);
+        const match = String(paths[i] || "").match(patterns[p]);
         if (match) return match[1];
       }
     }
 
-    // Brightspace Content / Custom Widget replace string when left unsubstituted → ignore
     const token = "{OrgUnitId}";
     if (/^\d+$/.test(token)) return token;
     return null;
+  }
+
+  function setStep1Tab(which) {
+    const tabs = {
+      current: $("tabCurrentCourse"),
+      mine: $("tabMyCourses"),
+      search: $("tabSearch")
+    };
+    const panes = {
+      current: $("currentCoursePane"),
+      mine: $("myCoursesPane"),
+      search: $("searchPane")
+    };
+    Object.keys(tabs).forEach(function (key) {
+      if (tabs[key]) tabs[key].setAttribute("aria-selected", key === which ? "true" : "false");
+      if (panes[key]) panes[key].classList.toggle("hidden", key !== which);
+    });
+  }
+
+  function updateCurrentCourseHint() {
+    const ou = detectCourseOrgUnitId();
+    const hint = $("currentCourseHint");
+    if (!hint) return;
+    if (ou) {
+      hint.style.display = "inline-block";
+      hint.textContent = "Detected OU " + ou;
+    } else {
+      hint.style.display = "none";
+      hint.textContent = "";
+    }
+    return ou;
+  }
+
+  async function useCurrentCourse(options) {
+    const opts = options || {};
+    const ou = detectCourseOrgUnitId();
+    if (!ou) {
+      setStatus(
+        $("step1Status"),
+        "Could not detect the current course ID from this page URL.\n" +
+          "Open the builder from a course Content topic or homepage, or use Search with the course org unit ID " +
+          "(the number in /d2l/le/content/THIS_NUMBER/… — not the topic ID after viewContent/).",
+        "err"
+      );
+      setStep1Tab("current");
+      return null;
+    }
+
+    setStatus($("step1Status"), "Loading current course " + ou + "…");
+    let course = state.courses.find(function (c) { return c.id === ou; });
+    if (!course) course = await resolveCourseById(ou);
+
+    // Verify it really is a course offering when possible
+    try {
+      await api("/d2l/api/lp/" + CONFIG.LP_VERSION + "/courses/" + ou);
+    } catch (e) {
+      setStatus(
+        $("step1Status"),
+        "Detected ID " + ou + " but /courses/" + ou + " returned an error.\n" +
+          (e && e.message ? e.message : "") +
+          "\nUse Search with the course org unit ID from the Content URL path /d2l/le/content/{courseId}/…",
+        "err"
+      );
+      return null;
+    }
+
+    selectCourse(course);
+    showContextBanner(course);
+    updateCurrentCourseHint();
+    if (opts.advance !== false) {
+      unlockThrough(2);
+      showStep(2);
+      await loadSectionsAndConfig();
+    }
+    return course;
   }
 
   function showContextBanner(course) {
@@ -865,11 +995,29 @@
     return key + "_" + i;
   }
 
-  function displayNameToSortable(first, last) {
+  function formatDisplayName(first, last) {
     const f = String(first || "").trim();
     const l = String(last || "").trim();
-    if (l && f) return l + ", " + f;
-    return l || f || "Instructor";
+    if (f && l) return f + " " + l;
+    return f || l || "";
+  }
+
+  function splitDisplayName(name) {
+    const s = String(name || "").trim();
+    if (!s) return { first: "", last: "" };
+    if (s.indexOf(",") !== -1) {
+      const parts = s.split(",");
+      return {
+        last: String(parts[0] || "").trim(),
+        first: parts.slice(1).join(",").trim()
+      };
+    }
+    const parts = s.split(/\s+/).filter(Boolean);
+    if (parts.length === 1) return { first: parts[0], last: "" };
+    return {
+      first: parts[0],
+      last: parts.slice(1).join(" ")
+    };
   }
 
   function showStep(n) {
@@ -1015,7 +1163,19 @@
       host.appendChild(btn);
       selectCourse(course);
     } catch (err) {
-      setStatus($("step1Status"), err.message, "err");
+      const detected = detectCourseOrgUnitId();
+      let msg = err.message || String(err);
+      if (ouId && detected && ouId !== detected) {
+        msg +=
+          "\n\nNote: " + ouId + " is not a course offering. " +
+          "If you copied a number from the Content URL, use the course ID before viewContent/ " +
+          "(detected current course: " + detected + "). Click “Current course” → Use current course.";
+      } else if (ouId && /404|Not Found/i.test(msg)) {
+        msg +=
+          "\n\nThat ID is not a course offering. Content URLs look like " +
+          "/d2l/le/content/{COURSE_OU}/viewContent/{TOPIC_ID}/View — enter {COURSE_OU}, not {TOPIC_ID}.";
+      }
+      setStatus($("step1Status"), msg, "err");
     }
   }
 
@@ -1055,8 +1215,14 @@
         state.instructors = {};
         Object.keys(existing.instructors).forEach(function (key) {
           const src = existing.instructors[key] || {};
+          const parts = (src.firstName || src.lastName)
+            ? { first: src.firstName || "", last: src.lastName || "" }
+            : splitDisplayName(src.name || "");
+          const display = formatDisplayName(parts.first, parts.last) || src.name || key;
           state.instructors[key] = {
-            name: src.name || key,
+            name: display,
+            firstName: parts.first || "",
+            lastName: parts.last || "",
             title: src.title || "Instructor",
             email: src.email || "",
             phone: src.phone || "",
@@ -1173,10 +1339,14 @@
     state.editingKey = key || null;
     state.pendingPhoto = null;
     const inst = key ? state.instructors[key] : {
-      name: "", title: "Instructor", email: "", phone: "", office: "",
-      officeHours: "", bio: "", image: "", _previewUrl: ""
+      name: "", firstName: "", lastName: "", title: "Instructor", email: "", phone: "",
+      office: "", officeHours: "", bio: "", image: "", _previewUrl: ""
     };
-    $("fName").value = inst.name || "";
+    const parts = (inst.firstName || inst.lastName)
+      ? { first: inst.firstName || "", last: inst.lastName || "" }
+      : splitDisplayName(inst.name);
+    $("fFirst").value = parts.first || "";
+    $("fLast").value = parts.last || "";
     $("fTitle").value = inst.title || "Instructor";
     $("fEmail").value = inst.email || "";
     $("fPhone").value = inst.phone || "";
@@ -1184,8 +1354,8 @@
     $("fHours").value = inst.officeHours || "";
     $("fBio").value = inst.bio || "";
     $("fKey").value = key || "";
-    $("fKey").readOnly = Boolean(key);
     $("fImageName").value = inst.image || "";
+    $("photoFileLabel").textContent = inst.image || "No file chosen";
     const preview = $("photoPreview");
     if (inst._previewUrl) {
       preview.className = "avatar-preview";
@@ -1263,10 +1433,15 @@
       setStatus($("step3Status"), "Resizing photo…");
       const blob = await resizeImageFile(file);
       const previewUrl = URL.createObjectURL(blob);
-      const keyHint = sanitizeKey($("fKey").value || $("fName").value || "instructor");
+      const keyHint = sanitizeKey(
+        $("fKey").value ||
+        formatDisplayName($("fFirst").value, $("fLast").value) ||
+        "instructor"
+      );
       const fileName = keyHint + ".jpg";
       state.pendingPhoto = { blob: blob, previewUrl: previewUrl, fileName: fileName };
       $("fImageName").value = fileName;
+      $("photoFileLabel").textContent = file.name + " → " + fileName;
       const preview = $("photoPreview");
       const img = document.createElement("img");
       img.id = "photoPreview";
@@ -1285,14 +1460,16 @@
   }
 
   function saveInstructorFromEditor() {
-    const name = String($("fName").value || "").trim();
-    if (!name) {
-      setStatus($("step3Status"), "Display name is required.", "err");
+    const firstName = String($("fFirst").value || "").trim();
+    const lastName = String($("fLast").value || "").trim();
+    const name = formatDisplayName(firstName, lastName);
+    if (!firstName && !lastName) {
+      setStatus($("step3Status"), "First name or last name is required.", "err");
       return;
     }
     let key = String($("fKey").value || "").trim();
     if (!state.editingKey) {
-      key = uniqueKey(key || name);
+      key = uniqueKey(key || (lastName || firstName || name));
     } else {
       key = state.editingKey;
     }
@@ -1301,6 +1478,8 @@
     const imageName = String($("fImageName").value || "").trim() || (sanitizeKey(key) + ".jpg");
     const next = {
       name: name,
+      firstName: firstName,
+      lastName: lastName,
       title: String($("fTitle").value || "").trim() || "Instructor",
       email: String($("fEmail").value || "").trim(),
       phone: String($("fPhone").value || "").trim(),
@@ -1308,6 +1487,7 @@
       officeHours: String($("fHours").value || "").trim(),
       bio: String($("fBio").value || "").trim(),
       image: imageName,
+      _userId: existing._userId || "",
       _blob: existing._blob || null,
       _previewUrl: existing._previewUrl || ""
     };
@@ -1323,55 +1503,199 @@
     if (!state.defaultInstructorKey) state.defaultInstructorKey = key;
     closeEditor();
     renderInstructorList();
-    setStatus($("step3Status"), "Saved instructor “" + name + "” (" + key + ").", "ok");
+    setStatus($("step3Status"), "Saved instructor “" + name + "”.", "ok");
+  }
+
+  async function fetchInstructorsForOrgUnit(orgUnitId) {
+    const found = [];
+    const roleIds = CONFIG.INSTRUCTOR_ROLE_IDS && CONFIG.INSTRUCTOR_ROLE_IDS.length
+      ? CONFIG.INSTRUCTOR_ROLE_IDS
+      : [102];
+
+    for (let r = 0; r < roleIds.length; r++) {
+      try {
+        const users = await fetchPaginated(
+          "/d2l/api/lp/" + CONFIG.LP_VERSION +
+          "/enrollments/orgUnits/" + orgUnitId +
+          "/users/?roleId=" + roleIds[r] + "&isActive=true"
+        );
+        users.forEach(function (row) {
+          found.push({ row: row, orgUnitId: String(orgUnitId) });
+        });
+      } catch (e) {
+        // Section OUs can 403/404 depending on permissions; keep going
+      }
+    }
+    return found;
+  }
+
+  function enrollmentToInstructorDraft(row, orgUnitId) {
+    const user = row.User || row;
+    const role = row.Role || {};
+    const first = String(user.FirstName || "").trim();
+    const last = String(user.LastName || "").trim();
+    const username = user.UserName || "";
+    const name =
+      formatDisplayName(first, last) ||
+      String(user.DisplayName || "").trim() ||
+      username ||
+      "Instructor";
+    const userId = String(user.Identifier || user.Id || "");
+    const keyBase = (last || first || username || "instructor") + (userId ? "_" + userId : "");
+    return {
+      userId: userId,
+      keyBase: keyBase,
+      name: name,
+      firstName: first,
+      lastName: last,
+      title: role.Name || "Instructor",
+      email: user.ExternalEmail || user.EmailAddress || user.Email || "",
+      username: username,
+      sourceOu: String(orgUnitId || "")
+    };
   }
 
   async function suggestInstructorsFromCourse() {
     if (!state.selectedCourse) return;
-    setStatus($("step3Status"), "Loading course instructors…");
+    setStatus($("step3Status"), "Loading instructors from the course offering and each section…");
+
     try {
-      const users = await fetchPaginated(
-        "/d2l/api/lp/" + CONFIG.LP_VERSION +
-        "/enrollments/orgUnits/" + state.selectedCourse.id +
-        "/users/?roleId=" + CONFIG.INSTRUCTOR_ROLE_IDS[0] + "&isActive=true"
-      );
+      // Ensure sections are available (needed for section-level instructor enrollments)
+      if (!state.sections.length) {
+        const sectionsRaw = await api(
+          "/d2l/api/lp/" + CONFIG.LP_VERSION + "/" + state.selectedCourse.id + "/sections/"
+        );
+        state.sections = (Array.isArray(sectionsRaw) ? sectionsRaw : []).map(function (s) {
+          return {
+            id: String(s.SectionId != null ? s.SectionId : s.Identifier || ""),
+            name: s.Name || "",
+            code: s.Code || ""
+          };
+        }).filter(function (s) { return s.id; });
+      }
+
+      const hits = [];
+      const offeringHits = await fetchInstructorsForOrgUnit(state.selectedCourse.id);
+      hits.push.apply(hits, offeringHits);
+
+      for (let i = 0; i < state.sections.length; i++) {
+        const sectionHits = await fetchInstructorsForOrgUnit(state.sections[i].id);
+        hits.push.apply(hits, sectionHits);
+      }
+
+      // Deduplicate by Brightspace user id (fallback: display name)
+      const byUser = {};
+      hits.forEach(function (hit) {
+        const draft = enrollmentToInstructorDraft(hit.row, hit.orgUnitId);
+        const dedupeKey = draft.userId || draft.name.toLowerCase();
+        if (!byUser[dedupeKey]) {
+          byUser[dedupeKey] = draft;
+          byUser[dedupeKey].sectionIds = [];
+        }
+        // Track section OUs where this person appears (for optional auto-map)
+        if (draft.sourceOu && draft.sourceOu !== String(state.selectedCourse.id)) {
+          if (byUser[dedupeKey].sectionIds.indexOf(draft.sourceOu) === -1) {
+            byUser[dedupeKey].sectionIds.push(draft.sourceOu);
+          }
+        }
+        if (!byUser[dedupeKey].email && draft.email) byUser[dedupeKey].email = draft.email;
+      });
+
+      const existingUserIds = {};
+      const existingNames = {};
+      Object.keys(state.instructors).forEach(function (k) {
+        const inst = state.instructors[k];
+        if (inst._userId) existingUserIds[String(inst._userId)] = k;
+        if (inst.name) existingNames[String(inst.name).toLowerCase()] = k;
+      });
+
       let added = 0;
-      users.forEach(function (row) {
-        const user = row.User || row;
-        const first = user.FirstName || "";
-        const last = user.LastName || "";
-        const name = displayNameToSortable(first, last);
-        const key = uniqueKey((last || first || user.UserName || "instructor") + "_" + (user.Identifier || ""));
-        if (Object.keys(state.instructors).some(function (k) {
-          return state.instructors[k].name === name;
-        })) return;
+      const addedKeys = [];
+      Object.keys(byUser).forEach(function (dedupeKey) {
+        const draft = byUser[dedupeKey];
+        if (draft.userId && existingUserIds[draft.userId]) return;
+        if (existingNames[draft.name.toLowerCase()]) return;
+
+        const key = uniqueKey(draft.keyBase);
         state.instructors[key] = {
-          name: name,
-          title: "Instructor",
-          email: user.ExternalEmail || user.EmailAddress || user.Email || "",
+          name: draft.name,
+          firstName: draft.firstName || "",
+          lastName: draft.lastName || "",
+          title: draft.title || "Instructor",
+          email: draft.email || "",
           phone: "",
           office: "",
           officeHours: "",
           bio: "",
           image: sanitizeKey(key) + ".jpg",
+          username: draft.username || undefined,
+          _userId: draft.userId || "",
           _blob: null,
           _previewUrl: ""
         };
+        existingUserIds[draft.userId || key] = key;
+        existingNames[draft.name.toLowerCase()] = key;
+        addedKeys.push(key);
         added++;
+
+        // If this instructor only appears under one section OU, pre-map that section
+        if (draft.sectionIds && draft.sectionIds.length === 1) {
+          const sid = draft.sectionIds[0];
+          if (Object.prototype.hasOwnProperty.call(state.sectionMap, sid) && !state.sectionMap[sid]) {
+            state.sectionMap[sid] = key;
+          }
+        }
       });
+
       if (!state.defaultInstructorKey && Object.keys(state.instructors).length) {
         state.defaultInstructorKey = Object.keys(state.instructors)[0];
       }
+
+      const totalUnique = Object.keys(byUser).length;
+      const offeringUserIds = {};
+      offeringHits.forEach(function (hit) {
+        const draft = enrollmentToInstructorDraft(hit.row, hit.orgUnitId);
+        offeringUserIds[draft.userId || draft.name.toLowerCase()] = true;
+      });
+      const offeringUnique = Object.keys(offeringUserIds).length;
+
       renderInstructorList();
+
+      let detail =
+        "Scanned course offering + " + state.sections.length + " section(s); " +
+        "found " + totalUnique + " unique instructor(s) (" + offeringUnique + " on the offering).";
+
+      if (added) {
+        setStatus(
+          $("step3Status"),
+          "Added " + added + " instructor(s). " + detail +
+            " Edit each to add photo and office details." +
+            (totalUnique > offeringUnique
+              ? " Some were enrolled on sections only (common in multi-section courses)."
+              : ""),
+          "ok"
+        );
+      } else if (totalUnique) {
+        setStatus(
+          $("step3Status"),
+          "No new instructors to add — " + totalUnique + " already in your list. " + detail,
+          "warn"
+        );
+      } else {
+        setStatus(
+          $("step3Status"),
+          "No instructors found with role ID(s) " + CONFIG.INSTRUCTOR_ROLE_IDS.join(", ") +
+            " on this offering or its sections.\n" +
+            "Add instructors manually, or confirm they are enrolled with your Instructor role.",
+          "warn"
+        );
+      }
+    } catch (err) {
       setStatus(
         $("step3Status"),
-        added
-          ? "Added " + added + " instructor(s) from the course roster. Edit each to add photo and office details."
-          : "No new instructors found (they may already be in your list).",
-        added ? "ok" : "warn"
+        err.message + "\nTip: you need permission to read enrollments for this course and its sections.",
+        "err"
       );
-    } catch (err) {
-      setStatus($("step3Status"), err.message + "\nTip: you need permission to read enrollments for this course.", "err");
     }
   }
 
@@ -1489,6 +1813,8 @@
       const src = state.instructors[key];
       instructors[key] = {
         name: src.name,
+        firstName: src.firstName || undefined,
+        lastName: src.lastName || undefined,
         title: src.title || undefined,
         email: src.email || undefined,
         phone: src.phone || undefined,
@@ -1683,19 +2009,22 @@
       });
     });
 
+    $("tabCurrentCourse").addEventListener("click", function () {
+      setStep1Tab("current");
+      updateCurrentCourseHint();
+    });
     $("tabMyCourses").addEventListener("click", function () {
-      $("tabMyCourses").setAttribute("aria-selected", "true");
-      $("tabSearch").setAttribute("aria-selected", "false");
-      $("myCoursesPane").classList.remove("hidden");
-      $("searchPane").classList.add("hidden");
+      setStep1Tab("mine");
     });
     $("tabSearch").addEventListener("click", function () {
-      $("tabMyCourses").setAttribute("aria-selected", "false");
-      $("tabSearch").setAttribute("aria-selected", "true");
-      $("myCoursesPane").classList.add("hidden");
-      $("searchPane").classList.remove("hidden");
+      setStep1Tab("search");
+      const ou = detectCourseOrgUnitId();
+      if (ou && !$("searchOuId").value) $("searchOuId").value = ou;
     });
 
+    $("btnUseCurrentCourse").addEventListener("click", function () {
+      useCurrentCourse({ advance: true });
+    });
     $("btnRefreshCourses").addEventListener("click", loadMyCourses);
     $("courseFilter").addEventListener("input", function () { renderCourseList(state.courses); });
     $("btnSearchCourse").addEventListener("click", searchCourse);
@@ -1750,17 +2079,12 @@
     }
 
     await loadMyCourses();
+    updateCurrentCourseHint();
 
     const contextOu = detectCourseOrgUnitId();
     if (contextOu) {
-      let course = state.courses.find(function (c) { return c.id === contextOu; });
-      if (!course) course = await resolveCourseById(contextOu);
-      selectCourse(course);
-      showContextBanner(course);
-      // Prefer jumping instructors straight into section setup for this course
-      unlockThrough(2);
-      showStep(2);
-      await loadSectionsAndConfig();
+      setStep1Tab("current");
+      await useCurrentCourse({ advance: true });
     }
   }
 

@@ -125,7 +125,9 @@
   function showFrame(url) {
     var frame = document.getElementById("builderFrame");
     frame.classList.remove("hidden");
-    frame.src = url;
+    // Pass courseId so the builder always knows the offering even inside an iframe
+    var sep = url.indexOf("?") >= 0 ? "&" : "?";
+    frame.src = url + sep + "courseId=" + encodeURIComponent(ou);
   }
 
   function probe(url) {
