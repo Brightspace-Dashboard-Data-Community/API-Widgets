@@ -222,7 +222,9 @@ Prefer Option A/B for simpler caching and replace-string behavior.
   "defaultInstructorKey": "instructor_a",
   "instructors": {
     "instructor_a": {
-      "name": "Smith, Alex",
+      "name": "Alex Smith",
+      "firstName": "Alex",
+      "lastName": "Smith",
       "title": "Instructor",
       "email": "alex.smith@example.edu",
       "phone": "555-0101",
@@ -243,9 +245,9 @@ Prefer Option A/B for simpler caching and replace-string behavior.
 |-------|----------|-------|
 | `defaultInstructorKey` | Recommended | Fallback when a section is not listed in `sections` |
 | `instructors` | Yes | Map of keys → profile objects |
-| `instructors.*.name` | Yes | Display name |
-| `instructors.*.email` | No | Enables the Email button (`mailto:`) |
-| `instructors.*.title` | No | Role line under the name |
+| `instructors.*.name` | Yes | Display name as **First Last** (e.g. `Alex Smith`) |
+| `instructors.*.firstName` / `lastName` | No | Optional; used by the config builder |
+| `instructors.*.title` | No | Role line under the name (Instructor, Professor, TA, …) |
 | `instructors.*.officeHours` / `office` / `phone` / `bio` | No | Omitted fields are hidden |
 | `instructors.*.image` | No | Relative to the JSON file’s folder, or an absolute `/content/...` or `https://...` URL |
 | `sections` | Yes | Keys may be **Section ID**, **Code**, or **Name**; values are instructor keys |
