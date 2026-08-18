@@ -1,8 +1,8 @@
 # Upcoming Courses Widget
 
-A custom **Brightspace (D2L) homepage HTML widget** that shows a user their **upcoming-term course enrollments** pulled from an SIS enrollment CSV—before those courses appear on the standard My Courses list.
+A custom **Brightspace (D2L) homepage HTML widget** that shows a user their **upcoming course enrollments** from SIS CSV files in a Manage Files folder—before those courses start and appear on the standard My Courses list.
 
-Originally built for **Delta College**. The widget runs entirely in the browser using Brightspace’s built-in APIs and a CSV file you host in **Manage Files**—no separate server or OAuth app required.
+Originally built for **Delta College**. The widget runs entirely in the browser using Brightspace’s built-in APIs and CSV files you host in **Manage Files**—no separate server or OAuth app required.
 
 ---
 
@@ -10,22 +10,43 @@ Originally built for **Delta College**. The widget runs entirely in the browser 
 
 | Audience | Behavior |
 |----------|----------|
-| **Instructors** | Lists sections they are assigned to teach for the configured term, with a link to submit textbook orders |
-| **Students** | Lists courses they are enrolled in for the configured term, with instructor name and a bookstore link |
+| **Instructors** | Loads **My Enrollments**, matches each course offering **Code** to the CSV Combined field, lists upcoming sections (not yet started) with a link into the course |
+| **Students** | Lists courses they are enrolled in (CSV `stc_person_id` ↔ Org Defined ID) that have not started yet, with instructor name and a bookstore link |
 
-The widget looks up the logged-in user’s **Org Defined ID** and matches it against `faculty_id` (instructors) or `person_id` (students) in your enrollment export.
+The widget looks up the logged-in user’s **Org Defined ID** and matches it against **`stc_person_id`** (students). Instructors are detected from Brightspace enrollments (role 102 / “Instructor”), not from `faculty_id` in the CSV.
+
+### Multiple terms
+
+Upload **one CSV per term** (leave them as separate files). The widget checks each name and skips any that are missing:
+
+```
+/content/future-courses/future_courses_26FA.csv
+/content/future-courses/future_courses_27WI.csv
+/content/future-courses/future_courses_27SP.csv
+/content/future-courses/future_courses_27FA.csv
+```
+
+It also checks **later terms automatically** (`future_courses_28WI.csv`, `28SP`, `28FA`, …) for this year plus the next four years (FA, WI, SP, SU). Missing files 404 and are ignored. Files are never merged on disk.
+
+Then it:
+
+- Keeps only courses whose **`stc_start_date` is still in the future**
+- If the user has courses in **more than one term**, groups them under semester headings (Fall 26, Winter 27, …)
+- If only **one** future term is on screen, no extra semester headings—just that term’s title
 
 ### Priority logic
 
-1. If the user has **instructor** rows for the term → show the **faculty** view (no instructor names on course cards).
+1. If **My Enrollments** includes instructor course offerings → match those offering codes to the CSV Combined field and show the **faculty** view (course title links to `/d2l/home/{OrgUnitId}`).
 2. Otherwise → show the **student** view (includes instructor names).
-3. If no matching rows → show *"No {Term} courses found."*
+3. If no matching **future** rows → show *"No upcoming courses found."*
+
+Faculty teaching lists require the D2L course offering **Code** to match Combined values such as `OAT-151-FA860-26/FA`.
 
 ### Enrollment status handling
 
 Only rows with status **`A`** (add/enrolled) or **`N`** (new) are treated as active enrollments.
 
-If a student or faculty member has multiple rows for the same person + section + term (e.g. adds and drops over time), the widget keeps only the row with the **latest `stc_status_date`** before checking status. Dropped courses do not appear.
+If a student has multiple rows for the same person + combined section + term (e.g. adds and drops over time), the widget keeps only the row with the **latest `stc_current_status_date`** before checking status. Dropped courses do not appear.
 
 ---
 
@@ -43,13 +64,13 @@ flowchart TD
     B --> C{Blocked admin user?}
     C -->|Yes| D[Widget hidden]
     C -->|No| E[Load OrgDefinedId from user profile]
-    E --> F[Fetch enrollment CSV from Manage Files]
-    F --> G[Filter rows by term code]
-    G --> H{Match faculty_id?}
-    H -->|Yes| I[Faculty course list + book order link]
-    H -->|No| J{Match person_id?}
-    J -->|Yes| K[Student course list + bookstore link]
-    J -->|No| L[No courses message]
+    E --> F[Load CSVs from future-courses folder]
+    F --> G[Keep rows whose start date is still in the future]
+    G --> H{Instructor course offerings in myenrollments?}
+    H -->|Yes| I[Match OrgUnit.Code to Combined + course link]
+    H -->|No| J{Match stc_person_id?}
+    J -->|Yes| K[Student list, grouped by term if 2+]
+    J -->|No| L[No upcoming courses message]
 ```
 
 ### Data sources
@@ -57,14 +78,15 @@ flowchart TD
 | Source | Purpose |
 |--------|---------|
 | `GET /d2l/api/lp/.../users/whoami` | Current user identity |
-| `GET /d2l/api/lp/.../users/{id}` | Org Defined ID (student/faculty ID from SIS) |
-| **CSV in Manage Files** | Term enrollment export (same file used for Adds & Drops reporting) |
+| `GET /d2l/api/lp/.../users/{id}` | Org Defined ID (students) |
+| `GET /d2l/api/lp/.../enrollments/myenrollments` | Instructor course offerings (Code + OrgUnitId) |
+| **CSVs in Manage Files** | One Insights future-courses export per term in `/content/future-courses/` |
 
 The widget uses the browser session (`credentials: "include"`) and `X-CSRF-Token` from `localStorage` for D2L API calls.
 
 ### ID matching
 
-SIS exports may strip **leading zeros** from `person_id` or `faculty_id`. The widget tries padded and unpadded variants (7–10 digits) so `1234567` matches `001234567` in Brightspace.
+SIS exports may strip **leading zeros** from `stc_person_id`. The widget tries padded and unpadded variants (7–10 digits) so `1234567` matches `001234567` in Brightspace.
 
 ---
 
@@ -73,6 +95,8 @@ SIS exports may strip **leading zeros** from `person_id` or `faculty_id`. The wi
 | File | Description |
 |------|-------------|
 | `upcoming-courses-widget.html` | Complete widget markup + inline CSS + JavaScript. Copy into a D2L **Custom Widget** or homepage HTML widget. |
+| `sample-future_courses_26FA.csv` | Fake-data Fall 26 export in the `stc_*` layout |
+| `sample-future_courses_27WI.csv` | Fake-data Winter 27 export (second file so you can test headings) |
 | `README.md` | This documentation |
 
 ---
@@ -88,10 +112,11 @@ SIS exports may strip **leading zeros** from `person_id` or `faculty_id`. The wi
 
 ## Installation (Delta College)
 
-1. Export or publish your term enrollment file (e.g. from Ellucian Insights / Adds & Drops pipeline).
-2. Upload to Manage Files:
+1. Export the Insights **future-courses** report for each upcoming term.
+2. Upload each term as its **own** file (do not combine them):
    ```
-   /content/future-courses/26FA-Enrollments-Students.csv
+   /content/future-courses/future_courses_26FA.csv
+   /content/future-courses/future_courses_27WI.csv
    ```
 3. Open **Admin Tools → Homepage Management** (or your org’s widget editor).
 4. Create or edit an **HTML / Custom Widget**.
@@ -103,22 +128,29 @@ SIS exports may strip **leading zeros** from `person_id` or `faculty_id`. The wi
 
 ## CSV format
 
-The widget expects the **Ellucian Insights / Adds & Drops** column layout (lowercase headers after parsing):
+The widget expects the Insights **future-courses** layout (headers are lowercased after parsing). Extra columns are ignored.
+
+```
+stc_course_name,stc_end_date,stc_person_id,stc_section_no,stc_start_date,stc_current_status,stc_current_status_date,stc_term,stc_title,"Combined stc_course_name, stc_section_no, stc_term",faculty_name
+```
+
+Use `sample-future_courses_26FA.csv` as a side-by-side template.
 
 | Column | Example | Notes |
 |--------|---------|-------|
-| `faculty_id` | `9876543` | Matched to instructor Org Defined ID |
-| `person_id` | `1234567` | Matched to student Org Defined ID |
-| `term` | `26/FA` | Filtered by term regex in widget |
-| `status` | `A`, `N`, `D`, `X` | Only `A` and `N` count as enrolled |
-| `stc_status_date` | `05/11/2026` | Used for deduplication (latest wins) |
-| `sec_title` | `Introduction to Psychology` | Course title displayed |
-| `sec_name` | `PSY-101-FA810` | Primary section code display |
-| `course_name` | `PSY` | Fallback with `section` if `sec_name` missing |
-| `section` | `FA810` | Fallback section number |
-| `faculty_name` | `Smith, John` | Shown on student view only |
+| `stc_person_id` | `1000001` | Matched to student Org Defined ID (leading zeros OK) |
+| `stc_term` | `26/FA` | Used for labels and multi-term section headings (`Fall 26`, `Winter 27`) |
+| `stc_current_status` | `A`, `N`, `D`, `X`, `NP`, `C` | Only `A` and `N` count as enrolled |
+| `stc_current_status_date` | `March 5, 2026, 12:00 AM` | Used for deduplication (latest wins) |
+| `stc_start_date` | `August 31, 2026, 12:00 AM` | Shown as **Starts**. Course is hidden once this timestamp is in the past. |
+| `stc_end_date` | `December 18, 2026, 12:00 AM` | Shown as **Ends** |
+| `stc_title` | `COLLEGE COMP I` | Course title displayed |
+| `Combined stc_course_name, stc_section_no, stc_term` | `ENG-111-FA802-26/FA` | Section line (D2L-style code). Built from the three parts if this column is missing. |
+| `stc_course_name` | `ENG-111` | Used only if Combined is missing |
+| `stc_section_no` | `FA802` | Used only if Combined is missing |
+| `faculty_name` | `Smith, Jane A` | Shown on student view. Insights may export a long model header that **ends with** `faculty_name` — that still matches. |
 
-UTF-8 BOM at the start of the file is handled automatically.
+UTF-8 BOM at the start of the file is handled automatically. Combined and faculty headers that contain commas must be quoted in the CSV.
 
 ---
 
@@ -126,39 +158,33 @@ UTF-8 BOM at the start of the file is handled automatically.
 
 Search `upcoming-courses-widget.html` for the values below.
 
-### 1. CSV URL
+### 1. CSV folder
 
 ```javascript
-const csvUrl = 'https://YOUR-BRIGHTSPACE-DOMAIN/content/YOUR-FOLDER/26FA-Enrollments-Students.csv';
+const CSV_FOLDER = '/content/future-courses/';
 ```
 
-Use a stable filename per term and update each semester.
+The widget **checks** these names in the folder (404 = skip, file stays separate):
 
-### 2. Term filter
-
-Current configuration is **Fall 2026** (`26/FA`):
-
-```javascript
-const FALL_26_TERMS = /26\/FA/i;
-
-function isFall26Term(term) {
-  return FALL_26_TERMS.test(String(term || '').trim());
-}
+```
+future_courses_26FA.csv
+future_courses_26WI.csv
+future_courses_26SP.csv
+future_courses_26SU.csv
+future_courses_27FA.csv
+future_courses_27WI.csv
+future_courses_27SP.csv
+future_courses_27SU.csv
+…through the next four years
 ```
 
-**Spring/Summer example:**
+No widget HTML edit is required when you add `future_courses_28FA.csv` later.
 
-```javascript
-const SPRING_SUMMER_26_TERMS = /26\/(SP|SU|SM|SS)/i;
-```
+### 2. Future-only filter and term headings
 
-| Semester | Example regex |
-|----------|----------------|
-| Fall 2026 | `/26\/FA/i` |
-| Spring/Summer 2026 | `/26\/(SP\|SU\|SM\|SS)/i` |
-| Winter 2026 | `/26\/WI/i` |
+There is no hardcoded term regex. A row is shown only when `stc_start_date` is **after now**. Semester section headings (`Fall 26`, `Winter 27`) render only when the user has **two or more** future terms on screen.
 
-Also update heading text (`Fall 26 Courses`, `Fall 26 Enrollments`, empty-state message).
+Term labels come from `stc_term` (`26/FA` → Fall 26, `27/WI` → Winter 27).
 
 ### 3. College name and links
 
@@ -168,8 +194,7 @@ Update faculty and student footer links:
 |---------|----------------------|
 | Faculty book orders | `Textbook requisition` (internal D2L link) |
 | Student bookstore | `https://bookstore.yourcollege.edu/buy_textbooks.asp` |
-| Book order deadline | April 10, 2026 |
-| Bookstore availability | Starting August 2026 |
+| Bookstore availability | August 10th, 2026 |
 
 ### 4. Blocked users (optional)
 
@@ -189,14 +214,16 @@ Course cards use a blue left border (`#0077cc`). Update inline styles in `render
 
 Use this when rolling out to a new term or institution:
 
-- [ ] Upload current-term enrollment CSV to Manage Files
-- [ ] Update `csvUrl` in the widget
-- [ ] Update term filter regex and all display labels
+- [ ] Upload each upcoming-term CSV as `future_courses_{yy}{TERM}.csv` (separate files)
+- [ ] Confirm `CSV_FOLDER` in the widget
 - [ ] Update bookstore and textbook requisition links
-- [ ] Update book deadline / availability messaging
 - [ ] Adjust `blockedUsers` if needed
-- [ ] Test as instructor with `faculty_id` in CSV
-- [ ] Test as student with `person_id` in CSV
+- [ ] Test as student with `stc_person_id` matching Org Defined ID
+- [ ] Test as instructor: offering Code matches Combined and title links to the course
+- [ ] Confirm Combined section code and start/end dates display
+- [ ] Confirm a course disappears after its start date
+- [ ] With two term files loaded, confirm semester headings appear
+- [ ] With only one future term, confirm no extra semester headings
 - [ ] Test user with no rows (empty state)
 - [ ] Test user with a recent drop (should not appear)
 
@@ -206,21 +233,23 @@ Use this when rolling out to a new term or institution:
 
 | Symptom | Likely cause |
 |---------|----------------|
-| `Widget Error: CSV fetch failed: 404` | CSV missing or wrong path in Manage Files |
-| `Unable to load your student or faculty ID` | `OrgDefinedId` empty on user profile |
-| No courses for a known enrolled student | ID mismatch (leading zeros); wrong term filter; latest row is a drop status |
-| Instructor sees student view | No `faculty_id` match in CSV for that term—instructor rows take priority when present |
+| Students see *No upcoming courses found.* | Empty match, start date already passed, missing CSV, or empty Org Defined ID. Open **Console** for the technical reason. |
+| No courses for a known enrolled student | ID mismatch; start date already passed; latest row is a drop status |
+| A started class still listed | `stc_start_date` missing or unparseable (must be a real future timestamp) |
+| Two term files but no semester headings | The user’s remaining **future** courses are all in one term (the other term already started or has no match) |
+| Instructor sees student view / no teaching list | No instructor course offerings in My Enrollments, or offering **Code** does not match CSV Combined (e.g. `OAT-151-FA860-26/FA`) |
 | Widget blank for admins | Username listed in `blockedUsers` |
-| Wrong courses showing | Wrong term CSV or term regex; stale CSV not refreshed |
+| Wrong courses showing | Stale CSV in Manage Files; browser cache (widget fetches with `cache: no-store`) |
 
 ### Debug tips
 
 Open **Developer Tools → Console** while logged in as the test user. The widget logs errors to the console on failure. Verify:
 
-1. CSV URL loads in browser while logged into Brightspace
-2. User’s Org Defined ID matches a `person_id` or `faculty_id` in the file
-3. Row `term` matches your regex (e.g. `26/FA`)
-4. Latest `stc_status_date` row for that section has status `A` or `N`
+1. CSV files in `/content/future-courses/` load while logged into Brightspace (`future_courses_26FA.csv`, `future_courses_27WI.csv`, …)
+2. User’s Org Defined ID matches a `stc_person_id` in the file
+3. Latest `stc_current_status_date` row for that section has status `A` or `N`
+4. `stc_start_date` is in the future
+5. Combined column (or course + section + term) is populated
 
 ---
 
@@ -238,10 +267,9 @@ Open **Developer Tools → Console** while logged in as the test user. The widge
 At the start of each registration or pre-term period:
 
 1. Generate a new enrollment CSV for the upcoming term.
-2. Upload to Manage Files (update filename if needed).
-3. Update `csvUrl`, term regex, and UI labels in the widget.
-4. Update bookstore / textbook messaging dates.
-5. Spot-check a few known students and instructors.
+2. Upload it beside the current file as `future_courses_{yy}{TERM}.csv`. Do not combine term files. No widget HTML edit is required for a new term.
+3. Remove or leave the previous term file; started courses drop off automatically via `stc_start_date`.
+4. Spot-check a few known students.
 
 ---
 
@@ -269,7 +297,11 @@ Developed by **Delta College** eLearning / D2L administration.
 
 **Version notes (Fall 2026):**
 
-- Term filter: `26/FA`
-- CSV: `26FA-Enrollments-Students.csv`
-- Enrollment statuses: `A`, `N` (with latest `stc_status_date` deduplication)
+- Folder: `/content/future-courses/` with separate `future_courses_{yy}{TERM}.csv` files (checked individually; missing files skipped)
+- Student match: Org Defined ID → `stc_person_id`
+- Faculty match: My Enrollments offering Code → CSV Combined, title links to `/d2l/home/{OrgUnitId}`
+- Display: Combined section code, start/end dates, instructor name
+- Only courses whose `stc_start_date` is still in the future
+- Semester headings only when two or more future terms are on screen
+- Enrollment statuses: `A`, `N` (with latest `stc_current_status_date` deduplication)
 - ID matching supports leading-zero variants
